@@ -1,0 +1,7 @@
+Copy this folder (rhythmcurse) to ~/.gnome2/rhythmbox/plugins
+(if the plugins dir does not exist, create it)
+
+Start rhythmbox -> modules -> rhythmcurse -> check it!
+
+Now you can use the cliprogram.py to send commands to the plugin.
+Check the result in /tmp/myplugin-file.txt
