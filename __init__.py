@@ -3,6 +3,29 @@ import socket
 import rb
 from threading import Thread
 
+
+
+class ClientThread(Thread):
+	def __init__(self, file, clientSocket):
+		Thread.__init__(self)
+		self.file = file
+		self.clientSocket = clientSocket
+	
+	def run(self):
+		print "A new client connection established"
+
+		while 1:
+			data = self.clientSocket.recv(1024)
+			if not data:
+				break
+			self.clientSocket.send(data)
+			self.file.write("A client sends: "+data)
+			self.file.flush()
+
+		self.file.write("A client closes connection\n")
+		self.file.flush()
+
+
 class ServerThread(Thread):
 	def __init__(self, file, serverSocket):
 		Thread.__init__(self)
@@ -23,10 +46,16 @@ class ServerThread(Thread):
 		self.file.flush()
 		while 1:
 			socket, addr = self.serverSocket.accept()
-			data = socket.recv(1024)
-			socket.send(data)
-			self.file.write("A client sends: "+data)
+			self.file.write("A new client connected\n")
 			self.file.flush()
+
+			client = ClientThread(self.file, socket)
+			client.start()
+
+			#data = socket.recv(1024)
+			#socket.send(data)
+			#self.file.write("A client sends: "+data)
+			#self.file.flush()
 
 
 class RhythmcursePlugin (rb.Plugin):
@@ -36,8 +65,14 @@ class RhythmcursePlugin (rb.Plugin):
 		print "myplugin: Hello from myplugin!\n"
 		self.file = open("/tmp/myplugin-file.txt", "w")
 		self.shell = shell
-		self.file.write("myplugin with network")
+		self.file.write("myplugin with network\n")
 		self.file.flush()
+
+		# is used to find a file in the plugin dir
+		#path = self.find_file("hej.txt")
+		#self.file.write("path: "+path)
+		#self.file.flush()
+
 	
 		# creating server socket
 		HOST = ''
