@@ -8,6 +8,10 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
 
 print "You are connected"
+print "Commands:"
+print "0 -> play"
+print "1 -> previous song"
+print "2 -> next song"
 while 1:
 	command = sys.stdin.readline()
 	s.send(command)
