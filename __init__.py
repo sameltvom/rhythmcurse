@@ -1,4 +1,19 @@
-# maybe a plugin...
+#    Rhythmcurse - A command line interface to Rhythmbox
+#    Copyright (C) 2010 Samuel Skånberg 
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import socket
 import rb
 from threading import Thread
@@ -16,31 +31,30 @@ class ClientThread(Thread):
 		print "A new client connection established"
 
 		while 1:
-			data = self.clientSocket.recv(1024)
-			if not data:
+			command = self.clientSocket.recv(1024)
+			if not command:
 				break
-			try:
-				command = int(data)
 				
-				if command == 0:
-					reply = "zero"
-					#self.shell.props.shell_player.playpause()
-					self.shell.props.shell_player.play()
-				elif command == 1:
-					reply = "one"
-					self.shell.props.shell_player.do_previous()
-				elif command == 2:
-					reply = "two"
-					self.shell.props.shell_player.do_next()
-				else:
-					reply = "I don't know that command"
+			command = command.strip()
+			if command == "play":
+				reply = "press play on tape"
+				self.shell.props.shell_player.play()
+			elif command == "pause":
+				reply = "press pause"
+				self.shell.props.shell_player.pause()
+			elif command == "next":
+				reply = "next song"
+				self.shell.props.shell_player.do_next()
+			elif command == "prev":
+				reply = "previous song"
+				self.shell.props.shell_player.do_previous()
 
-				self.clientSocket.send(reply)
-				self.file.write("A client sends: "+data)
-				self.file.flush()
-			except ValueError:
-				self.clientSocket.send("You have to enter a number")
-				print "You have to enter a number"
+			else:
+				reply = "I don't know that command"
+
+			self.clientSocket.send(reply)
+			self.file.write("A client sends: "+command)
+			self.file.flush()
 
 		self.file.write("A client closes connection\n")
 		self.file.flush()
@@ -72,12 +86,6 @@ class ServerThread(Thread):
 
 			client = ClientThread(self.file, socket, self.shell)
 			client.start()
-
-			#data = socket.recv(1024)
-			#socket.send(data)
-			#self.file.write("A client sends: "+data)
-			#self.file.flush()
-
 
 class RhythmcursePlugin (rb.Plugin):
 	def __init__(self):
