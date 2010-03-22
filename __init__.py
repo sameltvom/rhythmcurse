@@ -17,7 +17,7 @@
 import socket
 import rb
 from threading import Thread
-
+import gtk
 
 
 class ClientThread(Thread):
@@ -36,21 +36,37 @@ class ClientThread(Thread):
 				break
 				
 			command = command.strip()
+			# make sure to get the gdk lock since
+			# gtk isn't thread safe
+			gtk.gdk.threads_enter()
 			if command == "play":
-				reply = "press play on tape"
-				self.shell.props.shell_player.play()
+				try:
+					self.shell.props.shell_player.play()
+					reply = "press play on tape"
+				except:
+					reply = "couldn't play"
 			elif command == "pause":
-				reply = "press pause"
-				self.shell.props.shell_player.pause()
+				try:
+					self.shell.props.shell_player.pause()
+					reply = "press pause"
+				except:
+					reply = "couldn't pause"
 			elif command == "next":
-				reply = "next song"
-				self.shell.props.shell_player.do_next()
+				try:
+					self.shell.props.shell_player.do_next()
+					reply = "next song"
+				except:
+					reply = "couln't do next"
 			elif command == "prev":
-				reply = "previous song"
-				self.shell.props.shell_player.do_previous()
-
+				try:
+					self.shell.props.shell_player.do_previous()
+					reply = "previous song"
+				except:
+					reply = "couldn't do previous"
 			else:
 				reply = "I don't know that command"
+			# let the lock go
+			gtk.gdk.threads_leave()
 
 			self.clientSocket.send(reply)
 			self.file.write("A client sends: "+command)
@@ -61,11 +77,12 @@ class ClientThread(Thread):
 
 
 class ServerThread(Thread):
-	def __init__(self, file, serverSocket, shell):
+	def __init__(self, file, serverSocket, shell, clients):
 		Thread.__init__(self)
 		self.file = file
 		self.serverSocket = serverSocket
 		self.shell = shell
+		self.clients = clients
 		self.file.write("Creating thread...\n")
 		self.file.flush()
 
@@ -87,6 +104,9 @@ class ServerThread(Thread):
 			client = ClientThread(self.file, socket, self.shell)
 			client.start()
 
+			# save socket and thread so they can be destroyed in deactivate
+			self.clients.append((socket, client))
+
 class RhythmcursePlugin (rb.Plugin):
 	def __init__(self):
 		rb.Plugin.__init__(self)
@@ -97,6 +117,8 @@ class RhythmcursePlugin (rb.Plugin):
 		self.file.write("myplugin with network\n")
 		self.file.flush()
 
+		# so that we can close all sockets and kill all threads
+		self.clientSocketsAndThreads = []
 		# is used to find a file in the plugin dir
 		#path = self.find_file("hej.txt")
 		#self.file.write("path: "+path)
@@ -111,14 +133,34 @@ class RhythmcursePlugin (rb.Plugin):
 		self.serverSocket.listen(1)
 
 		# creating server thread
-		self.server = ServerThread(self.file, self.serverSocket, self.shell)
+		self.server = ServerThread(self.file, self.serverSocket, self.shell, self.clientSocketsAndThreads)
 		self.server.start()
 
 	def deactivate(self, shell):
+		try:
+			self.serverSocket.close()
+			print "Server socket closed"
+		except:
+			print "Couldn't close server socket"
+
+		try:
+			self.server.exit()
+			print "Server thread killed"
+		except:
+			print "Couldn't kill server thread"
 		del self.server
-		self.serverSocket.close()
+
 		del self.shell
 		self.file.write("Bye bye!")
 		self.file.close()
 		del self.file
+		print "List of clients sockets and threads:"
+		print self.clientSocketsAndThreads
+		for (socket,thread) in self.clientSocketsAndThreads:
+			try:
+				socket.close()
+				thread.exit()
+				print "Closed client socket and thread"
+			except:
+				print "Couldn't close socket and kill thread"
 	
