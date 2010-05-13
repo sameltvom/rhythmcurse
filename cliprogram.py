@@ -33,8 +33,12 @@ print "next -> next song"
 while 1:
 	command = sys.stdin.readline()
 	s.send(command)
-	data = s.recv(1024)
-	print 'Received: '+ repr(data)
+	if command.find("quit") >= 0:
+		print 'Quiting...'
+		break
+	else:
+		data = s.recv(1024)
+		print 'Received: '+ repr(data)
 
 s.close()
 
