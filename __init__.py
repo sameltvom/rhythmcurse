@@ -77,12 +77,13 @@ class ClientThread(Thread):
 
 
 class ServerThread(Thread):
-	def __init__(self, file, serverSocket, shell, clients):
+	def __init__(self, file, serverSocket, shell, clients, keepOn):
 		Thread.__init__(self)
 		self.file = file
 		self.serverSocket = serverSocket
 		self.shell = shell
 		self.clients = clients
+		self.keepOn = keepOn
 		self.file.write("Creating thread...\n")
 		self.file.flush()
 
@@ -96,7 +97,7 @@ class ServerThread(Thread):
 
 		self.file.write("We are now waiting for connections...\n")
 		self.file.flush()
-		while 1:
+		while self.keepOn:
 			socket, addr = self.serverSocket.accept()
 			self.file.write("A new client connected\n")
 			self.file.flush()
@@ -126,20 +127,33 @@ class RhythmcursePlugin (rb.Plugin):
 
 	
 		# creating server socket
-		HOST = ''
-		PORT = 5000
+		self.HOST = ''
+		self.PORT = 5000
+
+		# the condition for the while loop in server thread
+		self.keepOn = True
 		try:
 			self.serverSocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-			self.serverSocket.bind((HOST, PORT))
+			self.serverSocket.bind((self.HOST, self.PORT))
 			self.serverSocket.listen(1)
 
 			# creating server thread
-			self.server = ServerThread(self.file, self.serverSocket, self.shell, self.clientSocketsAndThreads)
+			self.server = ServerThread(self.file, self.serverSocket, self.shell, self.clientSocketsAndThreads, self.keepOn)
 			self.server.start()
 		except socket.error, msg:
 			self.file.write("There was an error binding the server socket\n")
 
 	def deactivate(self, shell):
+		# the server thread should exit
+		self.keepOn = False
+		try:
+			dummySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			dummySocket.connect((self.HOST, self.PORT))
+			self.file.write("Waking up server thread\n");
+		except:
+			self.file.write("Couldn't connect to server to wake it up\n");
+
+
 		try:
 			self.serverSocket.close()
 			self.file.write("Server socket closed down\n")
@@ -147,12 +161,12 @@ class RhythmcursePlugin (rb.Plugin):
 		except:
 			self.file.write("Couldn't close down server socket\n")
 
-		try:
-			self.server.exit()
-			self.file.write("Server thread killed\n")
-		except:
-			self.file.write("Couldn't kill server thread\n")
-		del self.server
+		#try:
+		#	self.server.exit()
+		#	self.file.write("Server thread killed\n")
+		#except:
+		#	self.file.write("Couldn't kill server thread\n")
+		#del self.server
 
 		del self.shell
 		self.file.write("Closing down...\n")
