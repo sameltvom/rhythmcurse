@@ -21,8 +21,12 @@ import sys
 
 HOST = 'localhost'
 PORT = 5000
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect((HOST, PORT))
+try:
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect((HOST, PORT))
+except:
+	print "Couldn't connect to rhythmcurse plugin, is rhythmcurse and rhytmbox alive?"
+	sys.exit()
 
 print "You are connected"
 print "Commands:"

@@ -69,7 +69,7 @@ class ClientThread(Thread):
 			gtk.gdk.threads_leave()
 
 			self.clientSocket.send(reply)
-			self.file.write("A client sends: "+command)
+			self.file.write("A client sends: "+command+"\n")
 			self.file.flush()
 
 		self.file.write("A client closes connection\n")
@@ -128,39 +128,44 @@ class RhythmcursePlugin (rb.Plugin):
 		# creating server socket
 		HOST = ''
 		PORT = 5000
-		self.serverSocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-		self.serverSocket.bind((HOST, PORT))
-		self.serverSocket.listen(1)
+		try:
+			self.serverSocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+			self.serverSocket.bind((HOST, PORT))
+			self.serverSocket.listen(1)
 
-		# creating server thread
-		self.server = ServerThread(self.file, self.serverSocket, self.shell, self.clientSocketsAndThreads)
-		self.server.start()
+			# creating server thread
+			self.server = ServerThread(self.file, self.serverSocket, self.shell, self.clientSocketsAndThreads)
+			self.server.start()
+		except socket.error, msg:
+			self.file.write("There was an error binding the server socket\n")
 
 	def deactivate(self, shell):
 		try:
 			self.serverSocket.close()
+			self.file.write("Server socket closed down\n")
 			print "Server socket closed"
 		except:
-			print "Couldn't close server socket"
+			self.file.write("Couldn't close down server socket\n")
 
 		try:
 			self.server.exit()
-			print "Server thread killed"
+			self.file.write("Server thread killed\n")
 		except:
-			print "Couldn't kill server thread"
+			self.file.write("Couldn't kill server thread\n")
 		del self.server
 
 		del self.shell
-		self.file.write("Bye bye!")
-		self.file.close()
-		del self.file
-		print "List of clients sockets and threads:"
-		print self.clientSocketsAndThreads
+		self.file.write("Closing down...\n")
+		#self.file.write(clientSocketsAndThreads)
 		for (socket,thread) in self.clientSocketsAndThreads:
 			try:
+				self.file.write("Closing down a socket\n")
 				socket.close()
+				self.file.write("Closing down a thread\n")
 				thread.exit()
-				print "Closed client socket and thread"
 			except:
-				print "Couldn't close socket and kill thread"
-	
+				self.file.write("Problem closing socket and thread\n")
+		
+		self.file.close()
+		del self.file
+
