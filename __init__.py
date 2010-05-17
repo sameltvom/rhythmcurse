@@ -15,6 +15,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import socket
+import sys
 import rb
 from threading import Thread
 import gtk
@@ -26,12 +27,33 @@ class ClientThread(Thread):
 		self.file = file
 		self.shell = shell
 		self.clientSocket = clientSocket
-	
-	def run(self):
-		print "A new client connection established"
 
-		while 1:
+	def help(self):
+		self.clientSocket.send("Commands:\r\n")
+		self.clientSocket.send("play -> play\r\n")
+		self.clientSocket.send("pause -> pause\r\n")
+		self.clientSocket.send("prev -> previous song\r\n")
+		self.clientSocket.send("next -> next song\r\n")
+
+
+	def run(self):
+		self.file.write("Client thread...\n")
+		self.file.flush()
+
+		#command = self.clientSocket.recv(1024)
+		self.clientSocket.send("You are connected to rhythmcurse\r\n")
+		
+		help()
+
+		keepOn = True
+
+		while keepOn:
+			self.file.write("Waiting for a clients command\n")
+			self.file.flush()
+
 			command = self.clientSocket.recv(1024)
+			self.file.write("Got command\n")
+			self.file.flush()
 			if not command:
 				break
 				
@@ -42,36 +64,45 @@ class ClientThread(Thread):
 			if command == "play":
 				try:
 					self.shell.props.shell_player.play()
-					reply = "press play on tape"
+					reply = "press play on tape\r\n"
 				except:
-					reply = "couldn't play"
+					reply = "couldn't play\r\n"
 			elif command == "pause":
 				try:
 					self.shell.props.shell_player.pause()
-					reply = "press pause"
+					reply = "press pause\r\n"
 				except:
-					reply = "couldn't pause"
+					reply = "couldn't pause\r\n"
 			elif command == "next":
 				try:
 					self.shell.props.shell_player.do_next()
-					reply = "next song"
+					reply = "next song\r\n"
 				except:
-					reply = "couln't do next"
+					reply = "couln't do next\r\n"
 			elif command == "prev":
 				try:
 					self.shell.props.shell_player.do_previous()
-					reply = "previous song"
+					reply = "previous song\r\n"
 				except:
-					reply = "couldn't do previous"
+					reply = "couldn't do previous\r\n"
+			elif command == "quit":
+				reply = "quiting...\r\n"
+				keepOn = False
+			elif command == "help":
+				help()
+				continue
 			else:
-				reply = "I don't know that command"
+				reply = "I don't know that command\r\n"
 			# let the lock go
 			gtk.gdk.threads_leave()
 
 			self.clientSocket.send(reply)
 			self.file.write("A client sends: "+command+"\n")
 			self.file.flush()
-
+		try:
+			self.clientSocket.close()
+		except:
+			self.file.write("Couldn't close down client socket")
 		self.file.write("A client closes connection\n")
 		self.file.flush()
 
@@ -90,10 +121,6 @@ class ServerThread(Thread):
 	def run(self):
 		self.file.write("Starting network...\n")
 		self.file.flush()
-		print "mylplugin now starting network!\n"
-
-
-		print "mylplugin now waiting for connections!\n"
 
 		self.file.write("We are now waiting for connections...\n")
 		self.file.flush()
@@ -112,7 +139,6 @@ class RhythmcursePlugin (rb.Plugin):
 	def __init__(self):
 		rb.Plugin.__init__(self)
 	def activate(self, shell):
-		print "myplugin: Hello from myplugin!\n"
 		self.file = open("/tmp/myplugin-file.txt", "w")
 		self.shell = shell
 		self.file.write("myplugin with network\n")
@@ -147,9 +173,14 @@ class RhythmcursePlugin (rb.Plugin):
 		# the server thread should exit
 		self.keepOn = False
 		try:
-			dummySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			dummySocket.connect((self.HOST, self.PORT))
+			self.file.write("Creating socket...\n");
+			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			self.file.write("Waking up thread, connecting to localhost at port %d\n" % (self.PORT,));
+			s.connect(('localhost', 5000))
 			self.file.write("Waking up server thread\n");
+			s.close()
+			self.file.write("Socket closed now\n");
+
 		except:
 			self.file.write("Couldn't connect to server to wake it up\n");
 
@@ -157,7 +188,6 @@ class RhythmcursePlugin (rb.Plugin):
 		try:
 			self.serverSocket.close()
 			self.file.write("Server socket closed down\n")
-			print "Server socket closed"
 		except:
 			self.file.write("Couldn't close down server socket\n")
 
