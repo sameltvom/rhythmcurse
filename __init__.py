@@ -28,7 +28,19 @@ class ClientThread(Thread):
 		self.shell = shell
 		self.clientSocket = clientSocket
 
-	def help(self):
+	#def help(self):
+	#	
+
+	def run(self):
+		self.file.write("Client thread, hello\n")
+		self.file.flush()
+
+		#command = self.clientSocket.recv(1024)
+		self.clientSocket.send("You are connected to rhythmcurse\r\n")
+		
+		self.file.write("Client thread, hello done\n")
+		self.file.flush()
+		
 		self.clientSocket.send("Commands:\r\n")
 		self.clientSocket.send("play -> play\r\n")
 		self.clientSocket.send("pause -> pause\r\n")
@@ -36,18 +48,12 @@ class ClientThread(Thread):
 		self.clientSocket.send("next -> next song\r\n")
 
 
-	def run(self):
-		self.file.write("Client thread...\n")
-		self.file.flush()
-
-		#command = self.clientSocket.recv(1024)
-		self.clientSocket.send("You are connected to rhythmcurse\r\n")
-		
-		help()
+		#help()
 
 		keepOn = True
 
 		while keepOn:
+			self.clientSocket.send("Give me a command\r\n")
 			self.file.write("Waiting for a clients command\n")
 			self.file.flush()
 
@@ -89,7 +95,7 @@ class ClientThread(Thread):
 				reply = "quiting...\r\n"
 				keepOn = False
 			elif command == "help":
-				help()
+				#help()
 				continue
 			else:
 				reply = "I don't know that command\r\n"
