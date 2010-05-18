@@ -50,9 +50,9 @@ class ClientThread(Thread):
 		
 		self.help()
 
-		keepOn = True
+		clientKeepOn = True
 
-		while keepOn:
+		while clientKeepOn:
 			self.clientSocket.send("Give me a command\r\n")
 			self.file.write("Waiting for a clients command\n")
 			self.file.flush()
@@ -93,7 +93,7 @@ class ClientThread(Thread):
 					reply = "couldn't do previous\r\n"
 			elif command == "quit":
 				reply = "quiting...\r\n"
-				keepOn = False
+				clientKeepOn = False
 			elif command == "help":
 				self.help()
 				gtk.gdk.threads_leave()
@@ -136,11 +136,12 @@ class ServerThread(Thread):
 			self.file.write("A new client connected\n")
 			self.file.flush()
 
-			client = ClientThread(self.file, clientSocket, self.shell)
-			client.start()
+			if self.keepOn[0]:
+				client = ClientThread(self.file, clientSocket, self.shell)
+				client.start()
 
-			# save socket and thread so they can be destroyed in deactivate
-			self.clients.append((clientSocket, client))
+				# save socket and thread so they can be destroyed in deactivate
+				self.clients.append((clientSocket, client))
 
 		self.file.write("Server thread done\n")
 		self.file.flush()
