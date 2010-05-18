@@ -131,7 +131,7 @@ class ServerThread(Thread):
 
 		self.file.write("We are now waiting for connections...\n")
 		self.file.flush()
-		while self.keepOn:
+		while self.keepOn[0]:
 			clientSocket, addr = self.serverSocket.accept()
 			self.file.write("A new client connected\n")
 			self.file.flush()
@@ -141,6 +141,10 @@ class ServerThread(Thread):
 
 			# save socket and thread so they can be destroyed in deactivate
 			self.clients.append((clientSocket, client))
+
+		self.file.write("Server thread done\n")
+		self.file.flush()
+
 
 class RhythmcursePlugin (rb.Plugin):
 	def __init__(self):
@@ -164,7 +168,8 @@ class RhythmcursePlugin (rb.Plugin):
 		self.PORT = 5000
 
 		# the condition for the while loop in server thread
-		self.keepOn = True
+		# make a list with one bool, so we can pass a reference to it
+		self.keepOn = [True]
 		try:
 			self.serverSocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 			self.serverSocket.bind((self.HOST, self.PORT))
@@ -178,7 +183,7 @@ class RhythmcursePlugin (rb.Plugin):
 
 	def deactivate(self, shell):
 		# the server thread should exit
-		self.keepOn = False
+		self.keepOn[0] = False
 		try:
 			self.file.write("Creating socket...\n");
 			self.file.flush()
