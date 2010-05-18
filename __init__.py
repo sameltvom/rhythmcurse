@@ -28,8 +28,14 @@ class ClientThread(Thread):
 		self.shell = shell
 		self.clientSocket = clientSocket
 
-	#def help(self):
-	#	
+	def help(self):
+		self.clientSocket.send("Commands:\r\n")
+		self.clientSocket.send("play -> play\r\n")
+		self.clientSocket.send("pause -> pause\r\n")
+		self.clientSocket.send("prev -> previous song\r\n")
+		self.clientSocket.send("next -> next song\r\n")
+
+
 
 	def run(self):
 		self.file.write("Client thread, hello\n")
@@ -41,14 +47,8 @@ class ClientThread(Thread):
 		self.file.write("Client thread, hello done\n")
 		self.file.flush()
 		
-		self.clientSocket.send("Commands:\r\n")
-		self.clientSocket.send("play -> play\r\n")
-		self.clientSocket.send("pause -> pause\r\n")
-		self.clientSocket.send("prev -> previous song\r\n")
-		self.clientSocket.send("next -> next song\r\n")
-
-
-		#help()
+		
+		self.help()
 
 		keepOn = True
 
@@ -95,7 +95,8 @@ class ClientThread(Thread):
 				reply = "quiting...\r\n"
 				keepOn = False
 			elif command == "help":
-				#help()
+				self.help()
+				gtk.gdk.threads_leave()
 				continue
 			else:
 				reply = "I don't know that command\r\n"
