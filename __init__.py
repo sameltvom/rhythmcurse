@@ -132,15 +132,15 @@ class ServerThread(Thread):
 		self.file.write("We are now waiting for connections...\n")
 		self.file.flush()
 		while self.keepOn:
-			socket, addr = self.serverSocket.accept()
+			clientSocket, addr = self.serverSocket.accept()
 			self.file.write("A new client connected\n")
 			self.file.flush()
 
-			client = ClientThread(self.file, socket, self.shell)
+			client = ClientThread(self.file, clientSocket, self.shell)
 			client.start()
 
 			# save socket and thread so they can be destroyed in deactivate
-			self.clients.append((socket, client))
+			self.clients.append((clientSocket, client))
 
 class RhythmcursePlugin (rb.Plugin):
 	def __init__(self):
@@ -181,22 +181,29 @@ class RhythmcursePlugin (rb.Plugin):
 		self.keepOn = False
 		try:
 			self.file.write("Creating socket...\n");
+			self.file.flush()
 			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			self.file.write("Waking up thread, connecting to localhost at port %d\n" % (self.PORT,));
+			self.file.flush()
 			s.connect(('localhost', 5000))
 			self.file.write("Waking up server thread\n");
+			self.file.flush()
 			s.close()
 			self.file.write("Socket closed now\n");
+			self.file.flush()
 
 		except:
 			self.file.write("Couldn't connect to server to wake it up\n");
+			self.file.flush()
 
 
 		try:
 			self.serverSocket.close()
 			self.file.write("Server socket closed down\n")
+			self.file.flush()
 		except:
 			self.file.write("Couldn't close down server socket\n")
+			self.file.flush()
 
 		#try:
 		#	self.server.exit()
@@ -207,15 +214,19 @@ class RhythmcursePlugin (rb.Plugin):
 
 		del self.shell
 		self.file.write("Closing down...\n")
+		self.file.flush()
 		#self.file.write(clientSocketsAndThreads)
-		for (socket,thread) in self.clientSocketsAndThreads:
+		for (aSocket,thread) in self.clientSocketsAndThreads:
 			try:
 				self.file.write("Closing down a socket\n")
-				socket.close()
+				self.file.flush()
+				aSocket.close()
 				self.file.write("Closing down a thread\n")
+				self.file.flush()
 				thread.exit()
 			except:
 				self.file.write("Problem closing socket and thread\n")
+				self.file.flush()
 		
 		self.file.close()
 		del self.file
