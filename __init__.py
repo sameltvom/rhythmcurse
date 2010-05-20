@@ -22,11 +22,12 @@ import gtk
 
 
 class ClientThread(Thread):
-	def __init__(self, file, clientSocket, shell):
+	def __init__(self, file, clientSocket, shell, clients):
 		Thread.__init__(self)
 		self.file = file
 		self.shell = shell
 		self.clientSocket = clientSocket
+		self.clients = clients
 
 	def help(self):
 		self.clientSocket.send("Commands:\r\n")
@@ -113,6 +114,15 @@ class ClientThread(Thread):
 		self.file.write("A client closes connection\n")
 		self.file.flush()
 
+		try:
+			del self.clients[self.clientSocket]
+			self.file.write("Client removes it self from list\n")
+			self.file.flush()
+		except:
+			self.file.write("Client cant' remove it self from list\n")
+			self.file.flush()
+
+
 
 class ServerThread(Thread):
 	def __init__(self, file, serverSocket, shell, clients, keepOn):
@@ -137,11 +147,11 @@ class ServerThread(Thread):
 			self.file.flush()
 
 			if self.keepOn[0]:
-				client = ClientThread(self.file, clientSocket, self.shell)
+				client = ClientThread(self.file, clientSocket, self.shell, self.clients)
 				client.start()
 
 				# save socket and thread so they can be destroyed in deactivate
-				self.clients.append((clientSocket, client))
+				self.clients[clientSocket] = client
 
 		self.file.write("Server thread done\n")
 		self.file.flush()
@@ -157,7 +167,7 @@ class RhythmcursePlugin (rb.Plugin):
 		self.file.flush()
 
 		# so that we can close all sockets and kill all threads
-		self.clientSocketsAndThreads = []
+		self.clientSocketsAndThreads = {}
 		# is used to find a file in the plugin dir
 		#path = self.find_file("hej.txt")
 		#self.file.write("path: "+path)
@@ -181,6 +191,7 @@ class RhythmcursePlugin (rb.Plugin):
 			self.server.start()
 		except socket.error, msg:
 			self.file.write("There was an error binding the server socket\n")
+			self.file.flush()
 
 	def deactivate(self, shell):
 		# the server thread should exit
@@ -221,18 +232,24 @@ class RhythmcursePlugin (rb.Plugin):
 		del self.shell
 		self.file.write("Closing down...\n")
 		self.file.flush()
-		#self.file.write(clientSocketsAndThreads)
-		for (aSocket,thread) in self.clientSocketsAndThreads:
+
+		self.file.write("Number of clients: %d\n" % (len(self.clientSocketsAndThreads),))
+		self.file.flush()
+
+
+		for aSocket,aThread in self.clientSocketsAndThreads.iteritems():
 			try:
 				self.file.write("Closing down a socket\n")
 				self.file.flush()
 				aSocket.close()
 				self.file.write("Closing down a thread\n")
 				self.file.flush()
-				thread.exit()
+				aThread.exit()
 			except:
 				self.file.write("Problem closing socket and thread\n")
 				self.file.flush()
+
+		self.clientSocketsAndThreads.clear()
 		
 		self.file.close()
 		del self.file
