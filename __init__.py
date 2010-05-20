@@ -156,14 +156,25 @@ class ServerThread(Thread):
 		self.file.write("Server thread done\n")
 		self.file.flush()
 
+		try:
+			self.serverSocket.close()
+			self.file.write("Server socket closed\n")
+			self.file.flush()
+
+		except:
+			self.file.write("Couldn't close down server socket\n")
+			self.file.flush()
+
+
+
 
 class RhythmcursePlugin (rb.Plugin):
 	def __init__(self):
 		rb.Plugin.__init__(self)
 	def activate(self, shell):
-		self.file = open("/tmp/myplugin-file.txt", "w")
+		self.file = open("/tmp/rhythmcurse.log", "w")
 		self.shell = shell
-		self.file.write("myplugin with network\n")
+		self.file.write("rhythmcurse log\n")
 		self.file.flush()
 
 		# so that we can close all sockets and kill all threads
@@ -194,19 +205,15 @@ class RhythmcursePlugin (rb.Plugin):
 			self.file.flush()
 
 	def deactivate(self, shell):
-		# the server thread should exit
+		self.file.write("Deactivating...\n")
+		self.file.flush()
+
 		self.keepOn[0] = False
 		try:
-			self.file.write("Creating socket...\n");
-			self.file.flush()
 			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			self.file.write("Waking up thread, connecting to localhost at port %d\n" % (self.PORT,));
-			self.file.flush()
 			s.connect(('localhost', 5000))
-			self.file.write("Waking up server thread\n");
-			self.file.flush()
 			s.close()
-			self.file.write("Socket closed now\n");
+			self.file.write("Server thread awakened by local connection\n");
 			self.file.flush()
 
 		except:
@@ -214,28 +221,10 @@ class RhythmcursePlugin (rb.Plugin):
 			self.file.flush()
 
 
-		try:
-			self.serverSocket.close()
-			self.file.write("Server socket closed down\n")
-			self.file.flush()
-		except:
-			self.file.write("Couldn't close down server socket\n")
-			self.file.flush()
-
-		#try:
-		#	self.server.exit()
-		#	self.file.write("Server thread killed\n")
-		#except:
-		#	self.file.write("Couldn't kill server thread\n")
-		#del self.server
-
 		del self.shell
-		self.file.write("Closing down...\n")
-		self.file.flush()
-
+		
 		self.file.write("Number of clients: %d\n" % (len(self.clientSocketsAndThreads),))
 		self.file.flush()
-
 
 		for aSocket,aThread in self.clientSocketsAndThreads.iteritems():
 			try:
