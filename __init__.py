@@ -21,9 +21,9 @@ from threading import Thread
 import gtk
 
 
-class ClientThread(Thread):
+class ClientThread():
 	def __init__(self, file, clientSocket, shell, clients):
-		Thread.__init__(self)
+		# Thread.__init__(self)
 		self.file = file
 		self.shell = shell
 		self.clientSocket = clientSocket
@@ -121,16 +121,6 @@ class ClientThread(Thread):
 		self.file.write("A client closes connection\n")
 		self.file.flush()
 
-		try:
-			del self.clients[self.clientSocket]
-			self.file.write("Client removes it self from list\n")
-			self.file.flush()
-		except:
-			self.file.write("Client cant' remove it self from list\n")
-			self.file.flush()
-
-
-
 class ServerThread(Thread):
 	def __init__(self, file, serverSocket, shell, clients, keepOn):
 		Thread.__init__(self)
@@ -148,27 +138,14 @@ class ServerThread(Thread):
 
 		self.file.write("We are now waiting for connections...\n")
 		self.file.flush()
-		while self.keepOn[0]:
-			clientSocket, addr = self.serverSocket.accept()
-			self.file.write("A new client connected\n")
-			self.file.flush()
+		
+		clientSocket, addr = self.serverSocket.accept()
+		self.file.write("A new client connected\n")
+		self.file.flush()
 
-			if self.keepOn[0]:
-				client = ClientThread(self.file, clientSocket, self.shell, self.clients)
-				client.start()
-
-				# save socket and thread so they can be destroyed in deactivate
-				self.clients[clientSocket] = client
-			else:
-				try:
-					self.file.write("Closing down socket waker\n")
-					self.file.flush()
-
-					clientSocket.close()
-				except:
-					self.file.write("Couldn't close down waker socket")
-					self.file.flush()
-
+		client = ClientThread(self.file, clientSocket, self.shell, self.clients)
+		# not a thread, will wait here until client closes down
+		client.run()
 
 
 
@@ -223,43 +200,8 @@ class RhythmcursePlugin (rb.Plugin):
 		self.file.write("Deactivating...\n")
 		self.file.flush()
 
-		self.keepOn[0] = False
-		try:
-			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			s.connect(('localhost', 5000))
-			# This should fail, that is because we did a close on it
-			self.file.write("Waker recv\n");
-			self.file.flush()
-			s.recv(1024)
-			self.file.write("Waker close\n");
-			self.file.flush()
-			s.close()
-			self.file.write("Waker done\n");
-			self.file.flush()
-
-		except:
-			self.file.write("Couldn't connect waker\n");
-			self.file.flush()
-
 
 		del self.shell
-		
-		self.file.write("Number of clients: %d\n" % (len(self.clientSocketsAndThreads),))
-		self.file.flush()
-
-		for aSocket,aThread in self.clientSocketsAndThreads.iteritems():
-			try:
-				self.file.write("Closing down a socket\n")
-				self.file.flush()
-				aSocket.close()
-				self.file.write("Closing down a thread\n")
-				self.file.flush()
-				aThread.exit()
-			except:
-				self.file.write("Problem closing socket and thread\n")
-				self.file.flush()
-
-		self.clientSocketsAndThreads.clear()
 		
 		self.file.close()
 		del self.file
