@@ -108,9 +108,16 @@ class ClientThread(Thread):
 			self.file.write("A client sends: "+command+"\n")
 			self.file.flush()
 		try:
+			self.file.write("Doing a final recv\n")
+			self.file.flush()
+			self.clientSocket.recv(1024)
+			self.file.write("Closing down socket\n")
+			self.file.flush()
+
 			self.clientSocket.close()
 		except:
 			self.file.write("Couldn't close down client socket")
+			self.file.flush()
 		self.file.write("A client closes connection\n")
 		self.file.flush()
 
@@ -152,6 +159,21 @@ class ServerThread(Thread):
 
 				# save socket and thread so they can be destroyed in deactivate
 				self.clients[clientSocket] = client
+			else:
+				try:
+					self.file.write("Doing a final recv on waker\n")
+					self.file.flush()
+					clientSocket.recv(1024)
+					self.file.write("Closing down socket waker\n")
+					self.file.flush()
+
+					clientSocket.close()
+				except:
+					self.file.write("Couldn't close down waker socket")
+					self.file.flush()
+
+
+
 
 		self.file.write("Server thread done\n")
 		self.file.flush()
