@@ -108,9 +108,9 @@ class ClientThread(Thread):
 			self.file.write("A client sends: "+command+"\n")
 			self.file.flush()
 		try:
-			self.file.write("Doing a final recv\n")
-			self.file.flush()
-			self.clientSocket.recv(1024)
+			# self.file.write("Doing a final recv\n")
+			# self.file.flush()
+			# self.clientSocket.recv(1024)
 			self.file.write("Closing down socket\n")
 			self.file.flush()
 
@@ -161,9 +161,6 @@ class ServerThread(Thread):
 				self.clients[clientSocket] = client
 			else:
 				try:
-					self.file.write("Doing a final recv on waker\n")
-					self.file.flush()
-					clientSocket.recv(1024)
 					self.file.write("Closing down socket waker\n")
 					self.file.flush()
 
@@ -201,10 +198,6 @@ class RhythmcursePlugin (rb.Plugin):
 
 		# so that we can close all sockets and kill all threads
 		self.clientSocketsAndThreads = {}
-		# is used to find a file in the plugin dir
-		#path = self.find_file("hej.txt")
-		#self.file.write("path: "+path)
-		#self.file.flush()
 
 	
 		# creating server socket
@@ -234,12 +227,18 @@ class RhythmcursePlugin (rb.Plugin):
 		try:
 			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			s.connect(('localhost', 5000))
+			# This should fail, that is because we did a close on it
+			self.file.write("Waker recv\n");
+			self.file.flush()
+			s.recv(1024)
+			self.file.write("Waker close\n");
+			self.file.flush()
 			s.close()
-			self.file.write("Server thread awakened by local connection\n");
+			self.file.write("Waker done\n");
 			self.file.flush()
 
 		except:
-			self.file.write("Couldn't connect to server to wake it up\n");
+			self.file.write("Couldn't connect waker\n");
 			self.file.flush()
 
 
