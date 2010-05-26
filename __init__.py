@@ -61,6 +61,9 @@ class ClientThread(Thread):
 			self.file.write("Got command\n")
 			self.file.flush()
 			if not command:
+				self.file.write("Got NO command\n")
+				self.file.flush()
+
 				break
 				
 			command = command.strip()
@@ -245,11 +248,9 @@ class RhythmcursePlugin (rb.Plugin):
 				self.file.write("Closing down a socket\n")
 				self.file.flush()
 				aSocket.close()
-				self.file.write("Closing down a thread\n")
-				self.file.flush()
-				aThread.exit()
+				# we ignore the thread for now
 			except:
-				self.file.write("Problem closing socket and thread\n")
+				self.file.write("Problem closing socket\n")
 				self.file.flush()
 
 		self.clientSocketsAndThreads.clear()
