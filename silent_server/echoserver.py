@@ -13,5 +13,5 @@ clientSocket, addr = s.accept()
 print 'Got a new connection from: ', addr
 
 # Closing it down
-#clientSocket.close()
-#s.close()
+clientSocket.close()
+s.close()
