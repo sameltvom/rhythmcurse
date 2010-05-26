@@ -22,12 +22,13 @@ import gtk
 
 
 class ClientThread(Thread):
-	def __init__(self, file, clientSocket, shell, clients):
+	def __init__(self, file, clientSocket, shell, clients, keepOn):
 		Thread.__init__(self)
 		self.file = file
 		self.shell = shell
 		self.clientSocket = clientSocket
 		self.clients = clients
+		self.keepOn = keepOn
 
 	def help(self):
 		self.clientSocket.send("Commands:\r\n")
@@ -50,20 +51,25 @@ class ClientThread(Thread):
 		
 		self.help()
 
-		clientKeepOn = True
 
 		self.clientSocket.send("Give me a command\r\n")
 		self.file.write("Waiting for a clients command\n")
 		self.file.flush()
 
-		while clientKeepOn:
+		localKeepOn = True
+
+		while self.keepOn[0] and localKeepOn:
 			# This is a complicated recv. If we get a timeout,
 			# continue so we can check condition
 			try:
 				command = self.clientSocket.recv(1024)
 			except socket.timeout:
+				self.file.write("Got timeout\n")
+				self.file.flush()
 				continue
 			except:
+				self.file.write("Exception here\n")
+				self.file.flush()
 				try:
 					self.clientSocket.close()
 					return
@@ -109,7 +115,8 @@ class ClientThread(Thread):
 					reply = "couldn't do previous\r\n"
 			elif command == "quit":
 				reply = "quiting...\r\n"
-				clientKeepOn = False
+				localKeepOn = False
+				# break
 			elif command == "help":
 				self.help()
 				gtk.gdk.threads_leave()
@@ -173,7 +180,7 @@ class ServerThread(Thread):
 			clientSocket.settimeout(1)
 
 			if self.keepOn[0]:
-				client = ClientThread(self.file, clientSocket, self.shell, self.clients)
+				client = ClientThread(self.file, clientSocket, self.shell, self.clients, self.keepOn)
 				client.start()
 
 				# save socket and thread so they can be destroyed in deactivate
