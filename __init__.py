@@ -42,7 +42,6 @@ class ClientThread(Thread):
 		self.file.write("Client thread, hello\n")
 		self.file.flush()
 
-		#command = self.clientSocket.recv(1024)
 		self.clientSocket.send("You are connected to rhythmcurse\r\n")
 		
 		self.file.write("Client thread, hello done\n")
@@ -108,9 +107,6 @@ class ClientThread(Thread):
 			self.file.write("A client sends: "+command+"\n")
 			self.file.flush()
 		try:
-			# self.file.write("Doing a final recv\n")
-			# self.file.flush()
-			# self.clientSocket.recv(1024)
 			self.file.write("Closing down socket\n")
 			self.file.flush()
 
@@ -209,6 +205,7 @@ class RhythmcursePlugin (rb.Plugin):
 		self.keepOn = [True]
 		try:
 			self.serverSocket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+			self.serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 			self.serverSocket.bind((self.HOST, self.PORT))
 			self.serverSocket.listen(1)
 
@@ -225,14 +222,10 @@ class RhythmcursePlugin (rb.Plugin):
 
 		self.keepOn[0] = False
 		try:
+			# Wake up the server thread so it can quit
 			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			s.connect(('localhost', 5000))
-			# This should fail, that is because we did a close on it
-			self.file.write("Waker recv\n");
-			self.file.flush()
-			s.recv(1024)
-			self.file.write("Waker close\n");
-			self.file.flush()
+			
 			s.close()
 			self.file.write("Waker done\n");
 			self.file.flush()
