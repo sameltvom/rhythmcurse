@@ -52,12 +52,25 @@ class ClientThread(Thread):
 
 		clientKeepOn = True
 
-		while clientKeepOn:
-			self.clientSocket.send("Give me a command\r\n")
-			self.file.write("Waiting for a clients command\n")
-			self.file.flush()
+		self.clientSocket.send("Give me a command\r\n")
+		self.file.write("Waiting for a clients command\n")
+		self.file.flush()
 
-			command = self.clientSocket.recv(1024)
+		while clientKeepOn:
+			# This is a complicated recv. If we get a timeout,
+			# continue so we can check condition
+			try:
+				command = self.clientSocket.recv(1024)
+			except socket.timeout:
+				continue
+			except:
+				try:
+					self.clientSocket.close()
+					return
+				except:
+					pass
+
+
 			self.file.write("Got command\n")
 			self.file.flush()
 			if not command:
@@ -109,6 +122,11 @@ class ClientThread(Thread):
 			self.clientSocket.send(reply)
 			self.file.write("A client sends: "+command+"\n")
 			self.file.flush()
+
+			self.clientSocket.send("Give me a command\r\n")
+			self.file.write("Waiting for a clients command\n")
+			self.file.flush()
+
 		try:
 			self.file.write("Closing down socket\n")
 			self.file.flush()
@@ -151,6 +169,8 @@ class ServerThread(Thread):
 			clientSocket, addr = self.serverSocket.accept()
 			self.file.write("A new client connected\n")
 			self.file.flush()
+
+			clientSocket.settimeout(1)
 
 			if self.keepOn[0]:
 				client = ClientThread(self.file, clientSocket, self.shell, self.clients)
