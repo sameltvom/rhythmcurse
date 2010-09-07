@@ -1,0 +1,39 @@
+To know the name of the python methods for the API
+http://library.gnome.org/devel/rhythmbox/unstable,
+go to the source: rhythmbox/bindings/python and grep for the c method name, e.g.
+
+$ grep "rb_shell_player_get_playing_source" *
+rb.defs:  (c-name "rb_shell_player_get_playing_source")
+
+So we can see in rb.defs:
+
+(define-method get_playing_source
+  (of-object "RBShellPlayer")
+  (c-name "rb_shell_player_get_playing_source")
+  (return-type "RBSource*")
+)
+
+Which gives us the information that the python name is get_playing_source.
+
+
+
+From http://live.gnome.org/Rhythmbox%20Plugins/Python%20Plugin%20Examples
+
+How do I get a list of the user's playlists?
+
+Playlists are stored in the source list model, the gtk.TreeModel in the left hand pane. Get a reference to the source list model with (shell.props.sourcelist.props.model. The "Playlists" header item is therefore playlist_mode_header = [x for x in list(shell.props.sourcelist.props.model) if list(x)[2] == "Playlists"][0], and you can get a list of playlist TreeModelRows with playlist_model_header.iterchildren(), so
+
+
+How do I get the list of songs in a source?
+
+A source's songs are stored in source.props.base_query_model, a gtk.TreeModel. Each item in that model is a gtk.TreeModelRow with two columns, a RhythmDBEntry and a path. So, to print all songs in a source:
+
+
+for treerow in source.props.base_query_model:
+  entry, path = list(treerow)
+  print entry
+
+
+
+API:
+http://library.gnome.org/devel/rhythmbox/unstable/

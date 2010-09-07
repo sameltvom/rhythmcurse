@@ -222,6 +222,23 @@ class RhythmcursePlugin (rb.Plugin):
 		self.file.write("rhythmcurse log\n")
 		self.file.flush()
 
+
+
+		# examnining the tree model
+		try:
+			gtk.gdk.threads_enter()
+			shellPlayer = self.shell.props.shell_player
+			source = shellPlayer.get_playing_source()
+			self.file.write("oki\n")
+			self.file.flush()
+			gtk.gdk.threads_leave()
+		except:
+			self.file.write("fail\n")
+			self.file.flush()
+
+
+
+
 		# so that we can close all sockets and kill all threads
 		self.clientSocketsAndThreads = {}
 
