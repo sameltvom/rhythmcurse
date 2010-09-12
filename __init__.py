@@ -32,11 +32,13 @@ class ClientThread(Thread):
 
 	def help(self):
 		self.clientSocket.send("Commands:\r\n")
-		self.clientSocket.send("play -> play\r\n")
+		self.clientSocket.send("play <id> -> plays the id given by \"list\"\r\n")
+		self.clientSocket.send("resume -> resume playing\r\n")
 		self.clientSocket.send("pause -> pause\r\n")
 		self.clientSocket.send("prev -> previous song\r\n")
 		self.clientSocket.send("next -> next song\r\n")
 		self.clientSocket.send("list -> list all selected songs\r\n")
+		self.clientSocket.send("> ")
 
 
 
@@ -53,7 +55,6 @@ class ClientThread(Thread):
 		self.help()
 
 
-		self.clientSocket.send("> ")
 		self.file.write("Waiting for a clients command\n")
 		self.file.flush()
 
@@ -90,12 +91,34 @@ class ClientThread(Thread):
 			# make sure to get the gdk lock since
 			# gtk isn't thread safe
 			gtk.gdk.threads_enter()
-			if command == "play":
+			if command.startswith("play"):
+				try:
+					if len(command.split("play ")) == 2:
+						songId = int(command.split("play ")[1])
+					else:
+						songId = 0 
+
+					# TODO: Make this better
+					i = 0
+					reply = "couldn't find song"
+					for row in self.shell.props.selected_source.props.query_model:
+						if i == songId:
+						 	entry = row[0]
+							self.shell.get_player().play_entry(entry)
+						 	reply = self.shell.props.db.entry_get(entry, rhythmdb.PROP_TITLE)
+							reply += "\r\n"	
+						i+=1
+
+					#reply = "play id %d\r\n" % (songId)
+					
+				except:
+					reply = "couldn't play id %s\r\n" %(songId, )
+			elif command == "resume":
 				try:
 					self.shell.props.shell_player.play()
 					reply = "press play on tape\r\n"
 				except:
-					reply = "couldn't play\r\n"
+					reply = "couldn't resume playing\r\n"
 			elif command == "pause":
 				try:
 					self.shell.props.shell_player.pause()
