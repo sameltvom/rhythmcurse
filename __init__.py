@@ -33,11 +33,13 @@ class ClientThread(Thread):
 	def help(self):
 		self.clientSocket.send("Commands:\r\n")
 		self.clientSocket.send("play <id> -> plays the id given by \"list\"\r\n")
-		self.clientSocket.send("resume -> resume playing\r\n")
-		self.clientSocket.send("pause -> pause\r\n")
-		self.clientSocket.send("prev -> previous song\r\n")
-		self.clientSocket.send("next -> next song\r\n")
-		self.clientSocket.send("list -> list all selected songs\r\n")
+		self.clientSocket.send("resume    -> resume playing\r\n")
+		self.clientSocket.send("pause     -> pause\r\n")
+		self.clientSocket.send("prev      -> previous song\r\n")
+		self.clientSocket.send("next      -> next song\r\n")
+		self.clientSocket.send("list      -> list all selected songs\r\n")
+		self.clientSocket.send("+         -> increase volume\r\n")
+		self.clientSocket.send("-         -> decrease volume\r\n")
 		self.clientSocket.send("> ")
 
 
@@ -107,10 +109,8 @@ class ClientThread(Thread):
 							self.shell.get_player().play_entry(entry)
 						 	reply = self.shell.props.db.entry_get(entry, rhythmdb.PROP_TITLE)
 							reply += "\r\n"	
+							break
 						i+=1
-
-					#reply = "play id %d\r\n" % (songId)
-					
 				except:
 					reply = "couldn't play id %s\r\n" %(songId, )
 			elif command == "resume":
@@ -143,13 +143,28 @@ class ClientThread(Thread):
 					id = 0
 					for row in self.shell.props.selected_source.props.query_model:
 					 	entry = row[0]
-						reply += "%d - " % (id,)
+						reply = "%d - " % (id,)
 					 	reply += self.shell.props.db.entry_get(entry, rhythmdb.PROP_TITLE)
 						reply += "\r\n"	
+						self.clientSocket.send(reply)
 						id+=1
+					reply = ""
 				except:
 					reply = "couldn't do list\r\n"
+			elif command.startswith("+"):
+				try:
+					self.shell.props.shell_player.set_volume_relative(0.1)
+					reply = "increased volume\r\n"
 
+				except:
+					reply = "couldn't increase volume\r\n"
+			elif command.startswith("-"):
+				try:
+					self.shell.props.shell_player.set_volume_relative(-0.1)
+					reply = "decreased volume\r\n"
+
+				except:
+					reply = "couldn't decrease volume\r\n"
 			elif command == "quit":
 				reply = "quiting...\r\n"
 				localKeepOn = False
@@ -164,6 +179,7 @@ class ClientThread(Thread):
 			gtk.gdk.threads_leave()
 
 			self.clientSocket.send(reply)
+			#self.clientSocket.flush()
 			self.file.write("A client sends: "+command+"\n")
 			self.file.flush()
 
