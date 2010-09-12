@@ -16,6 +16,42 @@ So we can see in rb.defs:
 Which gives us the information that the python name is get_playing_source.
 
 
+Another good thing is to know that you can use the interactive python console in rhytmbox and use class.__dict__ to get all method, e.g.:
+
+print rb.Shell.__dict__
+shell = rb.Shell()
+shell.__class__.__dict__
+player = shell.get_player()
+
+// list all entries in the current source
+
+>>> for row in shell.props.selected_source.props.query_model:
+... 	entry = row[0]
+... 	print shell.props.db.entry_get(entry, rhythmdb.PROP_TITLE)
+... 
+Katie Melua / Call Off The Search
+The Closest Thing To Crazy
+Learnin' The Blues
+Blame It On The Moon
+Nine Million Bicycles
+Halfway Up the Hindu Kush
+Spider's Web
+Thank You, Stars
+Just Like Heaven
+I Cried for You
+I Do Believe in Love
+Katie Melua - Pictures - 01 - Mary Pickford.mp3
+Katie Melua - Pictures - 03 - If The Lights Go Out.mp3
+Katie Melua - Pictures - 04 - What I Miss About You.mp3
+Katie Melua - Pictures - 05 - Spellbound.mp3
+Katie Melua - Pictures - 06 - What It Says On The Tin.mp3
+Katie Melua - Pictures - 08 - Perfect Circle.mp3
+Katie Melua - Pictures - 09 - Ghost Town.mp3
+Katie Melua - Pictures - 10 - If You Were A Sailboat.mp3
+
+// play an entry
+>>> print shell.get_player().play_entry(row[0])
+
 
 From http://live.gnome.org/Rhythmbox%20Plugins/Python%20Plugin%20Examples
 

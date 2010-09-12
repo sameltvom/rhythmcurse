@@ -19,7 +19,7 @@ import sys
 import rb
 from threading import Thread
 import gtk
-
+import rhythmdb
 
 class ClientThread(Thread):
 	def __init__(self, file, clientSocket, shell, clients, keepOn):
@@ -36,6 +36,7 @@ class ClientThread(Thread):
 		self.clientSocket.send("pause -> pause\r\n")
 		self.clientSocket.send("prev -> previous song\r\n")
 		self.clientSocket.send("next -> next song\r\n")
+		self.clientSocket.send("list -> list all selected songs\r\n")
 
 
 
@@ -52,7 +53,7 @@ class ClientThread(Thread):
 		self.help()
 
 
-		self.clientSocket.send("Give me a command\r\n")
+		self.clientSocket.send("> ")
 		self.file.write("Waiting for a clients command\n")
 		self.file.flush()
 
@@ -113,6 +114,20 @@ class ClientThread(Thread):
 					reply = "previous song\r\n"
 				except:
 					reply = "couldn't do previous\r\n"
+			elif command == "list":
+				try:
+					# TODO: replace with song listing
+					reply = ""
+					id = 0
+					for row in self.shell.props.selected_source.props.query_model:
+					 	entry = row[0]
+						reply += "%d " % (id,)
+					 	reply += self.shell.props.db.entry_get(entry, rhythmdb.PROP_TITLE)
+						reply += "\r\n"	
+						id+=1
+				except:
+					reply = "couldn't do list\r\n"
+
 			elif command == "quit":
 				reply = "quiting...\r\n"
 				localKeepOn = False
@@ -130,7 +145,7 @@ class ClientThread(Thread):
 			self.file.write("A client sends: "+command+"\n")
 			self.file.flush()
 
-			self.clientSocket.send("Give me a command\r\n")
+			self.clientSocket.send("> ")
 			self.file.write("Waiting for a clients command\n")
 			self.file.flush()
 
@@ -221,21 +236,6 @@ class RhythmcursePlugin (rb.Plugin):
 		self.shell = shell
 		self.file.write("rhythmcurse log\n")
 		self.file.flush()
-
-
-
-		# examnining the tree model
-		try:
-			gtk.gdk.threads_enter()
-			shellPlayer = self.shell.props.shell_player
-			source = shellPlayer.get_playing_source()
-			self.file.write("oki\n")
-			self.file.flush()
-			gtk.gdk.threads_leave()
-		except:
-			self.file.write("fail\n")
-			self.file.flush()
-
 
 
 
