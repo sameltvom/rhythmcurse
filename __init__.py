@@ -139,12 +139,11 @@ class ClientThread(Thread):
 					reply = "couldn't do previous\r\n"
 			elif command == "list":
 				try:
-					# TODO: replace with song listing
 					reply = ""
 					id = 0
 					for row in self.shell.props.selected_source.props.query_model:
 					 	entry = row[0]
-						reply += "%d " % (id,)
+						reply += "%d - " % (id,)
 					 	reply += self.shell.props.db.entry_get(entry, rhythmdb.PROP_TITLE)
 						reply += "\r\n"	
 						id+=1
