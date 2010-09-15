@@ -32,14 +32,16 @@ class ClientThread(Thread):
 
 	def help(self):
 		self.clientSocket.send("Commands:\r\n")
-		self.clientSocket.send("play <id> -> plays the id given by \"list\"\r\n")
-		self.clientSocket.send("resume    -> resume playing\r\n")
-		self.clientSocket.send("pause     -> pause\r\n")
-		self.clientSocket.send("prev      -> previous song\r\n")
-		self.clientSocket.send("next      -> next song\r\n")
-		self.clientSocket.send("list      -> list all selected songs\r\n")
-		self.clientSocket.send("+         -> increase volume\r\n")
-		self.clientSocket.send("-         -> decrease volume\r\n")
+		self.clientSocket.send("play <id>           -> plays the id given by \"list\"\r\n")
+		self.clientSocket.send("resume              -> resume playing\r\n")
+		self.clientSocket.send("pause               -> pause\r\n")
+		self.clientSocket.send("prev                -> previous song\r\n")
+		self.clientSocket.send("next                -> next song\r\n")
+		self.clientSocket.send("list                -> list all selected songs\r\n")
+		self.clientSocket.send("artist              -> list all artists\r\n")
+		self.clientSocket.send("set artist <artist> -> list all artists\r\n")
+		self.clientSocket.send("+                   -> increase volume\r\n")
+		self.clientSocket.send("-                   -> decrease volume\r\n")
 		self.clientSocket.send("> ")
 
 
@@ -151,6 +153,39 @@ class ClientThread(Thread):
 					reply = ""
 				except:
 					reply = "couldn't do list\r\n"
+			elif command == "artist":
+				try:
+					# reply = ""
+					# for p in self.shell.props.library_source.get_property_views():
+            				# 	if p.props.prop == rhythmdb.PROP_ARTIST:
+					# 		for row in p:
+					# 			reply = self.shell.props.db.entry_get(row[0], rhythmdb.PROP_ARTIST)
+					# 			reply += "\r\n"
+					# 			self.clientSocket.send(reply)
+								
+					reply = "nopi dopi"
+				except:
+					reply = "couldn't list artists\r\n"
+			elif command.startswith("set artist"):
+				try:
+					if len(command.split("set artist ")) == 2:
+						artist = command.split("set artist ")[1]
+					else:
+						artist = ""
+
+
+					#self.shell.props.library_source.get_property_views()[1].set_selection('Katie Melua')	
+					for p in self.shell.props.library_source.get_property_views():
+            				 	if p.props.prop == rhythmdb.PROP_ARTIST:
+							p.set_selection([artist])	
+					
+					# to get selected artist:
+					# self.shell.props.library_source.get_property_views()[1].get_selection()
+					reply = "set artist %s\r\n" % (artist,)
+				except:
+					reply = "couldn't set artists\r\n"
+
+
 			elif command.startswith("+"):
 				try:
 					self.shell.props.shell_player.set_volume_relative(0.1)

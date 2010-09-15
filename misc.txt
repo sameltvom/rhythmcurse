@@ -73,3 +73,10 @@ for treerow in source.props.base_query_model:
 
 API:
 http://library.gnome.org/devel/rhythmbox/unstable/
+
+
+23:57 < moch> since you want to select artists for playback, the way to do this is probably to find the artist property view for the library source, get the 
+              model from that, then iterate through it to get the artist names
+23:57 < moch> to select an artist, you call rb_property_view_set_selection on that property view, passing in a list containing the artist names you want to 
+              select
+
