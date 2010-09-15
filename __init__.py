@@ -155,6 +155,12 @@ class ClientThread(Thread):
 					reply = "couldn't do list\r\n"
 			elif command == "artist":
 				try:
+
+					# reset to all artists
+					for p in self.shell.props.library_source.get_property_views():
+                                                if p.props.prop == rhythmdb.PROP_ARTIST:
+                                                        p.set_selection([""])
+							break      
 					artists = set()
 					for row in self.shell.props.selected_source.props.query_model:
 					 	entry = row[0]
@@ -173,6 +179,11 @@ class ClientThread(Thread):
 			elif command.startswith("set artist"):
 				try:
 					if len(command.split("set artist ")) == 2:
+						# reset to all artists
+						for p in self.shell.props.library_source.get_property_views():
+                                                	if p.props.prop == rhythmdb.PROP_ARTIST:
+                                                        	p.set_selection([""])
+								break  
 						artistId = int(command.split("set artist ")[1])
 						artists = set()
 						for row in self.shell.props.selected_source.props.query_model:
