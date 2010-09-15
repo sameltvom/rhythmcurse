@@ -80,3 +80,7 @@ http://library.gnome.org/devel/rhythmbox/unstable/
 23:57 < moch> to select an artist, you call rb_property_view_set_selection on that property view, passing in a list containing the artist names you want to 
               select
 
+
+Make a query:
+http://rhythmbox-shoutcast.googlecode.com/hg/plugin/widgets/genreview.py?r=00c98b4b8ee685b1165a08bafda8fa9fc4507bcc
+

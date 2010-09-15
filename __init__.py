@@ -39,7 +39,7 @@ class ClientThread(Thread):
 		self.clientSocket.send("next                -> next song\r\n")
 		self.clientSocket.send("list                -> list all selected songs\r\n")
 		self.clientSocket.send("artist              -> list all artists\r\n")
-		self.clientSocket.send("set artist <artist> -> list all artists\r\n")
+		self.clientSocket.send("set artist <id>     -> list all artists\r\n")
 		self.clientSocket.send("+                   -> increase volume\r\n")
 		self.clientSocket.send("-                   -> decrease volume\r\n")
 		self.clientSocket.send("> ")
@@ -155,30 +155,56 @@ class ClientThread(Thread):
 					reply = "couldn't do list\r\n"
 			elif command == "artist":
 				try:
-					# reply = ""
-					# for p in self.shell.props.library_source.get_property_views():
-            				# 	if p.props.prop == rhythmdb.PROP_ARTIST:
-					# 		for row in p:
-					# 			reply = self.shell.props.db.entry_get(row[0], rhythmdb.PROP_ARTIST)
-					# 			reply += "\r\n"
-					# 			self.clientSocket.send(reply)
-								
-					reply = "nopi dopi"
+					artists = set()
+					for row in self.shell.props.selected_source.props.query_model:
+					 	entry = row[0]
+					 	artist = self.shell.props.db.entry_get(entry, rhythmdb.PROP_ARTIST)
+						artists.add(artist)
+					
+					id = 0
+					for artist in artists:
+						reply = "%d - %s\r\n" % (id, artist)
+						self.clientSocket.send(reply)
+						id+=1
+						
+					reply = ""		
 				except:
 					reply = "couldn't list artists\r\n"
 			elif command.startswith("set artist"):
 				try:
 					if len(command.split("set artist ")) == 2:
-						artist = command.split("set artist ")[1]
+						artistId = int(command.split("set artist ")[1])
+						artists = set()
+						for row in self.shell.props.selected_source.props.query_model:
+						 	entry = row[0]
+						 	artist = self.shell.props.db.entry_get(entry, rhythmdb.PROP_ARTIST)
+							artists.add(artist)
+						id = 0
+						for artist in artists:
+							if id == artistId:
+						 		artist = self.shell.props.db.entry_get(entry, rhythmdb.PROP_ARTIST)
+								break
+							id+=1
+
+						#artistId = int(command.split("set artist ")[1])
+						#artist = ""
+						#id = 0
+						#for row in self.shell.props.selected_source.props.query_model:
+						# 	entry = row[0]
+						#	if id == artistId:
+						# 		artist = self.shell.props.db.entry_get(entry, rhythmdb.PROP_ARTIST)
+						#	id+=1
 					else:
 						artist = ""
-
-
-					#self.shell.props.library_source.get_property_views()[1].set_selection('Katie Melua')	
+						
 					for p in self.shell.props.library_source.get_property_views():
-            				 	if p.props.prop == rhythmdb.PROP_ARTIST:
+	            			 	if p.props.prop == rhythmdb.PROP_ARTIST:
 							p.set_selection([artist])	
-					
+						
+
+					p.set_selection([artist])	
+
+
 					# to get selected artist:
 					# self.shell.props.library_source.get_property_views()[1].get_selection()
 					reply = "set artist %s\r\n" % (artist,)
