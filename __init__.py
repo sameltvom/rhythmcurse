@@ -32,16 +32,17 @@ class ClientThread(Thread):
 
 	def help(self):
 		self.clientSocket.send("Commands:\r\n")
-		self.clientSocket.send("play <id>           -> plays the id given by \"list\"\r\n")
-		self.clientSocket.send("resume              -> resume playing\r\n")
-		self.clientSocket.send("pause               -> pause\r\n")
-		self.clientSocket.send("prev                -> previous song\r\n")
-		self.clientSocket.send("next                -> next song\r\n")
-		self.clientSocket.send("list                -> list all selected songs\r\n")
-		self.clientSocket.send("artist              -> list all artists\r\n")
-		self.clientSocket.send("set artist <id>     -> list all artists\r\n")
-		self.clientSocket.send("+                   -> increase volume\r\n")
-		self.clientSocket.send("-                   -> decrease volume\r\n")
+		self.clientSocket.send("play <id>             -> plays the id given by \"list\"\r\n")
+		self.clientSocket.send("resume                -> resume playing\r\n")
+		self.clientSocket.send("pause                 -> pause\r\n")
+		self.clientSocket.send("prev                  -> previous song\r\n")
+		self.clientSocket.send("next                  -> next song\r\n")
+		self.clientSocket.send("list                  -> list all selected songs\r\n")
+		self.clientSocket.send("artist                -> list all artists\r\n")
+		self.clientSocket.send("set artist <id>       -> list all artists\r\n")
+		self.clientSocket.send("set artistname <name> -> list all artists\r\n")
+		self.clientSocket.send("+                     -> increase volume\r\n")
+		self.clientSocket.send("-                     -> decrease volume\r\n")
 		self.clientSocket.send("> ")
 
 
@@ -153,29 +154,55 @@ class ClientThread(Thread):
 					reply = ""
 				except:
 					reply = "couldn't do list\r\n"
-			elif command == "artist":
+			elif command == "no artist":
 				try:
-
 					selected = ""
 					# reset to all artists
 					for p in self.shell.props.library_source.get_property_views():
                                                 if p.props.prop == rhythmdb.PROP_ARTIST:
 							# save selection so we can restore it later
 							selected = p.get_selection()
-							# select all artists
+							for i in selected:
+								reply = "Got selected:" + i + "\r\n"
+								self.clientSocket.send(reply)
                                                         p.set_selection([""])
 							break      
+					reply = ""		
+				except:
+					reply = "couldn't list artists\r\n"
+
+			elif command == "artist":
+				try:
+
+					# selected = ""
+					# # reset to all artists
+					# for p in self.shell.props.library_source.get_property_views():
+                                        #         if p.props.prop == rhythmdb.PROP_ARTIST:
+					# 		# save selection so we can restore it later
+					# 		selected = p.get_selection()
+					# 		for i in selected:
+					# 			reply = "Got selected:" + i + "\r\n"
+					# 			self.clientSocket.send(reply)
+					# 		# select all artists
+                                        #                 p.set_selection([""])
+					# 		# update selection	
+					# 		gtk.gdk.threads_leave()
+					# 		gtk.gdk.threads_enter()
+					# 		break      
 					artists = set()
 					for row in self.shell.props.selected_source.props.query_model:
 					 	entry = row[0]
 					 	artist = self.shell.props.db.entry_get(entry, rhythmdb.PROP_ARTIST)
 						artists.add(artist)
+						reply = "Found artist:" + artist + "\r\n"
+						self.clientSocket.send(reply)
+
 					
 					# restore old selected artist
-					for p in self.shell.props.library_source.get_property_views():
-                                                if p.props.prop == rhythmdb.PROP_ARTIST:
-                                                        p.set_selection(selected)
-							break
+					# for p in self.shell.props.library_source.get_property_views():
+                                        #         if p.props.prop == rhythmdb.PROP_ARTIST:
+                                        #                 p.set_selection(selected)
+					# 		break
 					id = 0
 					for artist in artists:
 						reply = "%d - %s\r\n" % (id, artist)
@@ -185,7 +212,7 @@ class ClientThread(Thread):
 					reply = ""		
 				except:
 					reply = "couldn't list artists\r\n"
-			elif command.startswith("set artist"):
+			elif command.startswith("set artist "):
 				try:
 					if len(command.split("set artist ")) == 2:
 						# reset to all artists
@@ -194,17 +221,30 @@ class ClientThread(Thread):
                                                         	p.set_selection([""])
 								break  
 						artistId = int(command.split("set artist ")[1])
+						
+						reply = "Trying to set artistId: %d\r\n" % (artistId,)
+						self.clientSocket.send(reply)
+
 						artists = set()
 						for row in self.shell.props.selected_source.props.query_model:
 						 	entry = row[0]
 						 	artist = self.shell.props.db.entry_get(entry, rhythmdb.PROP_ARTIST)
 							artists.add(artist)
-						id = 0
-						for artist in artists:
-							if id == artistId:
+							
+							reply = "Found artist..:" + artist + "\r\n"
+							self.clientSocket.send(reply)
+
+						reply = "len(artists): %d\r\n" % (len(artists),)
+						self.clientSocket.send(reply)
+
+						i = 0
+						for s in artists:
+							reply = "Found artist: %s - %d\r\n" % (s,i)
+							self.clientSocket.send(reply)
+							if i == artistId:
 						 		artist = self.shell.props.db.entry_get(entry, rhythmdb.PROP_ARTIST)
 								break
-							id+=1
+							i+=1
 
 						#artistId = int(command.split("set artist ")[1])
 						#artist = ""
@@ -232,19 +272,33 @@ class ClientThread(Thread):
 				except:
 					reply = "couldn't set artists\r\n"
 
+			elif command.startswith("set artistname "):
+				try:
+					if len(command.split("set artistname ")) == 2:
+						artist = command.split("set artistname ")[1]
+					else:
+						artist = ""
+						
+					for p in self.shell.props.library_source.get_property_views():
+	            			 	if p.props.prop == rhythmdb.PROP_ARTIST:
+							p.set_selection([artist])	
+							break
+						
+					reply = "set artistname %s\r\n" % (artist,)
+				except:
+					reply = "couldn't set artists\r\n"
+
 
 			elif command.startswith("+"):
 				try:
 					self.shell.props.shell_player.set_volume_relative(0.1)
 					reply = "increased volume\r\n"
-
 				except:
 					reply = "couldn't increase volume\r\n"
 			elif command.startswith("-"):
 				try:
 					self.shell.props.shell_player.set_volume_relative(-0.1)
 					reply = "decreased volume\r\n"
-
 				except:
 					reply = "couldn't decrease volume\r\n"
 			elif command == "quit":
