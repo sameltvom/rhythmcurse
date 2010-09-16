@@ -156,9 +156,13 @@ class ClientThread(Thread):
 			elif command == "artist":
 				try:
 
+					selected = ""
 					# reset to all artists
 					for p in self.shell.props.library_source.get_property_views():
                                                 if p.props.prop == rhythmdb.PROP_ARTIST:
+							# save selection so we can restore it later
+							selected = p.get_selection()
+							# select all artists
                                                         p.set_selection([""])
 							break      
 					artists = set()
@@ -167,6 +171,11 @@ class ClientThread(Thread):
 					 	artist = self.shell.props.db.entry_get(entry, rhythmdb.PROP_ARTIST)
 						artists.add(artist)
 					
+					# restore old selected artist
+					for p in self.shell.props.library_source.get_property_views():
+                                                if p.props.prop == rhythmdb.PROP_ARTIST:
+                                                        p.set_selection(selected)
+							break
 					id = 0
 					for artist in artists:
 						reply = "%d - %s\r\n" % (id, artist)
@@ -211,9 +220,10 @@ class ClientThread(Thread):
 					for p in self.shell.props.library_source.get_property_views():
 	            			 	if p.props.prop == rhythmdb.PROP_ARTIST:
 							p.set_selection([artist])	
+							break
 						
 
-					p.set_selection([artist])	
+					#p.set_selection([artist])	
 
 
 					# to get selected artist:
