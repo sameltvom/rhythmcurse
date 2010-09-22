@@ -33,17 +33,17 @@ class ClientThread(Thread):
 	def help(self):
 		self.clientSocket.send("Commands:\r\n")
 		self.clientSocket.send("play <id>       -> plays the id given by \"list\"\r\n")
-		self.clientSocket.send("resume          -> resume playing\r\n")
 		self.clientSocket.send("pause           -> pause\r\n")
+		self.clientSocket.send("resume          -> resume playing\r\n")
 		self.clientSocket.send("prev            -> previous song\r\n")
 		self.clientSocket.send("next            -> next song\r\n")
 		self.clientSocket.send("list            -> list all selected songs\r\n")
 		self.clientSocket.send("artist          -> list all artists\r\n")
 		self.clientSocket.send("set artist <id> -> list all artists\r\n")
+		self.clientSocket.send("no artist       -> select all artists (do this before set artist <id>)\r\n")
 		self.clientSocket.send("+               -> increase volume\r\n")
 		self.clientSocket.send("-               -> decrease volume\r\n")
 		self.clientSocket.send("> ")
-
 
 
 	def run(self):
