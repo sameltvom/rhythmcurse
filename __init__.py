@@ -173,7 +173,10 @@ class ClientThread(Thread):
 					 	artist = self.shell.props.db.entry_get(entry, rhythmdb.PROP_ARTIST)
 						artists.add(artist)
 					id = 0
-					for artist in artists:
+
+					# sorted list
+					artists_sorted = sorted(artists)
+					for artist in artists_sorted:
 						reply = "%d - %s\r\n" % (id, artist)
 						self.clientSocket.send(reply)
 						id+=1
@@ -193,7 +196,10 @@ class ClientThread(Thread):
 							artists.add(artist)
 
 						i = 0
-						for s in artists:
+						# sorted list
+						artists_sorted = sorted(artists)
+
+						for s in artists_sorted:
 							if i == artistId:
 								artist = s
 								break
