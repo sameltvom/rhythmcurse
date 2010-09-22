@@ -11,5 +11,12 @@ After that you can do
 
 where rhythmboxhost is the host where rhythmbox is playing.
 
+Start rhythmbox via ssh
+If rhythmbox isn't running, you can start it by ssh:ing to that host and run
+
+  $ env DISPLAY=:0.0 rhythmbox-client
+
+And after that you can telnet to rhythmbox
+
 Bugs
 For now you have to do “no artist” before you can do “set artist ”.
