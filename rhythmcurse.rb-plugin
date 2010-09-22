@@ -5,5 +5,5 @@ IAge=1
 Name=rhythmcurse
 Description=Command line interface via an external program that communicates to the plugin via a network socket
 Authors=Samuel Skånberg
-Copyright=Copyright © 2010 Samuel Skånberg
+Copyright=Copyright © 2010 Samuel Skånberg <samuel_skanberg@yahoo.se>
 Website=http://github.com/sameltvom/rhythmcurse
