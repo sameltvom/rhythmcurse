@@ -1,8 +1,15 @@
-Information about Rhythmbox plugins:
+Installation
 
-* http://live.gnome.org/RhythmboxPlugins/WritingGuide
-* http://live.gnome.org/RhythmboxPlugins/ThirdParty
+  $ mkdir -p ~/.gnome2/rhythmbox/plugins
+  $ cd ~/.gnome2/.gnome2/rhythmbox/plugins
+  $ git clone git://github.com/sameltvom/rhythmcurse.git
 
-Information about python and sockets in python:
+Next time you open rhythmbox go to menu edit → Plugins → rhytmcurse and check it.
+After that you can do
 
-* http://docs.python.org/library/socket.html#example
+  $ telnet rhythmboxhost 5000
+
+where rhythmboxhost is the host where rhythmbox is playing.
+
+Bugs
+For now you have to do “no artist” before you can do “set artist ”.
