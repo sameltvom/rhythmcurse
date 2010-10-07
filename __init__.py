@@ -20,6 +20,7 @@ import rb
 from threading import Thread
 import gtk
 import rhythmdb
+import time
 
 class ClientThread(Thread):
 	def __init__(self, file, clientSocket, shell, clients, keepOn):
@@ -167,6 +168,21 @@ class ClientThread(Thread):
 					reply = "couldn't list artists\r\n"
 			elif command == "artist":
 				try:
+					
+					# reset to all artists
+					for p in self.shell.props.library_source.get_property_views():
+                                                if p.props.prop == rhythmdb.PROP_ARTIST:
+							artistNow = p.get_selection()
+                                                        p.set_selection([""])
+							break      
+					
+					# update the "set no artist"
+					gtk.gdk.threads_leave()
+					# python doesn't have Thread.yield as in Java
+					time.sleep(0.01)
+					gtk.gdk.threads_enter()
+
+					# find all artists
 					artists = set()
 					for row in self.shell.props.selected_source.props.query_model:
 					 	entry = row[0]
@@ -180,7 +196,19 @@ class ClientThread(Thread):
 						reply = "%d - %s\r\n" % (id, artist)
 						self.clientSocket.send(reply)
 						id+=1
-						
+					
+					# update the "set no artist"
+					gtk.gdk.threads_leave()
+					# python doesn't have Thread.yield as in Java
+					time.sleep(0.01)
+					gtk.gdk.threads_enter()
+
+
+					# reset the artist
+					for p in self.shell.props.library_source.get_property_views():
+                                                if p.props.prop == rhythmdb.PROP_ARTIST:
+                                                        p.set_selection(artistNow)
+							break 
 					reply = ""		
 				except:
 					reply = "couldn't list artists\r\n"
