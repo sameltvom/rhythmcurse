@@ -40,10 +40,11 @@ class ClientThread(Thread):
 		self.clientSocket.send("next            -> next song\r\n")
 		self.clientSocket.send("list            -> list all selected songs\r\n")
 		self.clientSocket.send("artist          -> list all artists\r\n")
-		self.clientSocket.send("set artist <id> -> list all artists\r\n")
-		self.clientSocket.send("no artist       -> select all artists (do this before set artist <id>)\r\n")
+		self.clientSocket.send("set artist <id> -> select an artist to play\r\n")
+		self.clientSocket.send("all artists     -> select all artists\r\n")
 		self.clientSocket.send("+               -> increase volume\r\n")
 		self.clientSocket.send("-               -> decrease volume\r\n")
+		self.clientSocket.send("\r\n")
 		self.clientSocket.send("> ")
 
 
@@ -156,7 +157,7 @@ class ClientThread(Thread):
 					reply = ""
 				except:
 					reply = "couldn't do list\r\n"
-			elif command == "no artist":
+			elif command == "all artists":
 				try:
 					# reset to all artists
 					for p in self.shell.props.library_source.get_property_views():
