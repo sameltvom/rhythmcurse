@@ -168,7 +168,6 @@ class ClientThread(Thread):
 					reply = "couldn't list artists\r\n"
 			elif command == "artist":
 				try:
-					
 					# reset to all artists
 					for p in self.shell.props.library_source.get_property_views():
                                                 if p.props.prop == rhythmdb.PROP_ARTIST:
@@ -198,10 +197,10 @@ class ClientThread(Thread):
 						id+=1
 					
 					# update the "set no artist"
-					gtk.gdk.threads_leave()
+					#gtk.gdk.threads_leave()
 					# python doesn't have Thread.yield as in Java
-					time.sleep(0.01)
-					gtk.gdk.threads_enter()
+					#time.sleep(0.01)
+					#gtk.gdk.threads_enter()
 
 
 					# reset the artist
@@ -214,6 +213,19 @@ class ClientThread(Thread):
 					reply = "couldn't list artists\r\n"
 			elif command.startswith("set artist "):
 				try:
+					# reset to all artists
+					for p in self.shell.props.library_source.get_property_views():
+                                                if p.props.prop == rhythmdb.PROP_ARTIST:
+							artistNow = p.get_selection()
+                                                        p.set_selection([""])
+							break      
+					
+					# update the "set no artist"
+					gtk.gdk.threads_leave()
+					# python doesn't have Thread.yield as in Java
+					time.sleep(0.01)
+					gtk.gdk.threads_enter()
+
 					if len(command.split("set artist ")) == 2:
 						artistId = int(command.split("set artist ")[1])
 						
