@@ -72,8 +72,8 @@ class ClientThread(Thread):
 			try:
 				command = self.clientSocket.recv(1024)
 			except socket.timeout:
-				self.file.write("Got timeout\n")
-				self.file.flush()
+				# self.file.write("Got timeout\n")
+				# self.file.flush()
 				continue
 			except:
 				self.file.write("Exception here\n")
@@ -344,28 +344,29 @@ class ServerThread(Thread):
 				self.clients[clientSocket] = client
 			else:
 				try:
-					self.file.write("Closing down socket waker\n")
-					self.file.flush()
+					#self.file.write("Closing down socket waker\n")
+					#self.file.flush()
 
 					clientSocket.close()
 				except:
-					self.file.write("Couldn't close down waker socket")
+					#self.file.write("Couldn't close down waker socket")
 					self.file.flush()
 
 
 
 
-		self.file.write("Server thread done\n")
-		self.file.flush()
+		#self.file.write("Server thread done\n")
+		#self.file.flush()
 
 		try:
 			self.serverSocket.close()
-			self.file.write("Server socket closed\n")
-			self.file.flush()
+			#self.file.write("Server socket closed\n")
+			#self.file.flush()
 
 		except:
-			self.file.write("Couldn't close down server socket\n")
-			self.file.flush()
+			pass
+			#self.file.write("Couldn't close down server socket\n")
+			#self.file.flush()
 
 
 
@@ -441,6 +442,6 @@ class RhythmcursePlugin (rb.Plugin):
 
 		self.clientSocketsAndThreads.clear()
 		
-		self.file.close()
-		del self.file
+		#self.file.close()
+		#del self.file
 
