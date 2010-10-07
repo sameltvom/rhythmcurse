@@ -18,5 +18,3 @@ If rhythmbox isn't running, you can start it by ssh:ing to that host and run
 
 And after that you can telnet to rhythmbox
 
-Bugs
-For now you have to do “no artist” before you can do “set artist ”.
