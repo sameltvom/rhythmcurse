@@ -179,7 +179,7 @@ class ClientThread(Thread):
 					# update the "set no artist"
 					gtk.gdk.threads_leave()
 					# python doesn't have Thread.yield as in Java
-					time.sleep(0.01)
+					time.sleep(0.1)
 					gtk.gdk.threads_enter()
 
 					# find all artists
@@ -224,7 +224,7 @@ class ClientThread(Thread):
 					# update the "set no artist"
 					gtk.gdk.threads_leave()
 					# python doesn't have Thread.yield as in Java
-					time.sleep(0.01)
+					time.sleep(0.1)
 					gtk.gdk.threads_enter()
 
 					if len(command.split("set artist ")) == 2:
