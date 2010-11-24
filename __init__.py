@@ -20,6 +20,7 @@ import rb
 from threading import Thread
 import gtk
 import rhythmdb
+import rb
 import time
 
 class ClientThread(Thread):
@@ -374,12 +375,42 @@ class ServerThread(Thread):
 class RhythmcursePlugin (rb.Plugin):
 	def __init__(self):
 		rb.Plugin.__init__(self)
+
+
+	def artist_changed_callback(self, arg2, arg3):
+		self.file.write("artist selection changed\n")
+		self.file.flush()
+	
+	def song_changed_callback(self, view, name, user_data):
+		self.file.write("song selection changed\n")
+		self.file.flush()
+
+
+
+	def song_changed_method(self, player, entry):
+		self.file.write("song_changed_method called\n")
+		self.file.flush()
+
+		self.file2 = open("/tmp/rhythmcurse2.log", "w")
+		self.file2.write("song changed\n")
+		self.file2.flush()
+
+
+
 	def activate(self, shell):
 		self.file = open("/tmp/rhythmcurse.log", "w")
 		self.shell = shell
 		self.file.write("rhythmcurse log\n")
 		self.file.flush()
 
+		for p in self.shell.props.library_source.get_property_views():
+			if p.props.prop == rhythmdb.PROP_ARTIST:
+				p.connect('properties-selected', self.artist_changed_callback)
+			if p.props.prop == rhythmdb.PROP_TITLE:
+				p.connect('properties-selected', self.song_changed_callback)
+		
+		player = shell.get_player()
+		self.csi_id = player.connect('playing-song-changed', self.song_changed_method)					
 
 
 		# so that we can close all sockets and kill all threads

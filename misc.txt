@@ -106,3 +106,7 @@ def request_playlist(self, reply):
         reply.send()
 
 
+
+
+player = shell.get_player()
+player.connect ('playing-song-changed', self.song_change)
