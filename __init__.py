@@ -53,13 +53,13 @@ class ClientThread(Thread):
 		self.file.write("Client thread, hello\n")
 		self.file.flush()
 
-		self.clientSocket.send("You are connected to rhythmcurse\r\n")
 		
 		self.file.write("Client thread, hello done\n")
 		self.file.flush()
 		
 		
-		self.help()
+		# self.clientSocket.send("You are connected to rhythmcurse\r\n")
+		# self.help()
 
 
 		self.file.write("Waiting for a clients command\n")
@@ -147,14 +147,19 @@ class ClientThread(Thread):
 				try:
 					reply = ""
 					id = 0
+					
+					self.clientSocket.send("LIST LIST_BGN\r\n")
 					for row in self.shell.props.selected_source.props.query_model:
 					 	entry = row[0]
-						reply = "%d - " % (id,)
+						reply = "LIST LIST_ITM "
+						reply += "%d - " % (id,)
 					 	reply += self.shell.props.db.entry_get(entry, rhythmdb.PROP_ARTIST)+" - "
 					 	reply += self.shell.props.db.entry_get(entry, rhythmdb.PROP_TITLE)
 						reply += "\r\n"	
 						self.clientSocket.send(reply)
 						id+=1
+					self.clientSocket.send("LIST LIST_END\r\n")
+
 					reply = ""
 				except:
 					reply = "couldn't do list\r\n"
@@ -193,11 +198,14 @@ class ClientThread(Thread):
 
 					# sorted list
 					artists_sorted = sorted(artists)
+					self.clientSocket.send("ARTIST ARTIST_BGN\r\n")
 					for artist in artists_sorted:
-						reply = "%d - %s\r\n" % (id, artist)
+						reply = "ARTIST ARTIST_ITM %d - %s\r\n" % (id, artist)
 						self.clientSocket.send(reply)
 						id+=1
-					
+					self.clientSocket.send("ARTIST ARTIST_END\r\n")
+										
+
 					# update the "set no artist"
 					#gtk.gdk.threads_leave()
 					# python doesn't have Thread.yield as in Java
@@ -288,9 +296,9 @@ class ClientThread(Thread):
 			self.file.write("A client sends: "+command+"\n")
 			self.file.flush()
 
-			self.clientSocket.send("> ")
-			self.file.write("Waiting for a clients command\n")
-			self.file.flush()
+			#self.clientSocket.send("> ")
+			#self.file.write("Waiting for a clients command\n")
+			#self.file.flush()
 
 		try:
 			self.file.write("Closing down socket\n")
@@ -383,14 +391,18 @@ class RhythmcursePlugin (rb.Plugin):
 		self.file.flush()
 
 		for client in self.clientSocketsAndThreads:
-			client.send("Album changed\r\n")
+			#client.send("Album changed\r\n")
+
+			# This command isn't that logical but it hints that
+			# the client should pull the song list
+			client.send("INF_ARTIST INF_ARTIST_OK\r\n")
 	
 	def song_changed_method(self, player, entry):
 		self.file.write("song_changed_method called\n")
 		self.file.flush()
 
 		for client in self.clientSocketsAndThreads:
-			client.send("Song changed\r\n")
+			client.send("SONG_CH SONG_CH_OK\r\n")
 
 
 	def activate(self, shell):
