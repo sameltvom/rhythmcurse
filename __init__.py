@@ -178,14 +178,13 @@ class ClientThread(Thread):
 					# reset to all artists
 					for p in self.shell.props.library_source.get_property_views():
                                                 if p.props.prop == rhythmdb.PROP_ARTIST:
-							artistNow = p.get_selection()
                                                         p.set_selection([""])
 							break      
 					
 					# update the "set no artist"
 					gtk.gdk.threads_leave()
 					# python doesn't have Thread.yield as in Java
-					time.sleep(0.1)
+					time.sleep(0.3)
 					gtk.gdk.threads_enter()
 
 					# find all artists
@@ -206,18 +205,11 @@ class ClientThread(Thread):
 					self.clientSocket.send("ARTIST ARTIST_END\r\n")
 										
 
-					# update the "set no artist"
-					#gtk.gdk.threads_leave()
-					# python doesn't have Thread.yield as in Java
-					#time.sleep(0.01)
-					#gtk.gdk.threads_enter()
-
-
 					# reset the artist
-					for p in self.shell.props.library_source.get_property_views():
-                                                if p.props.prop == rhythmdb.PROP_ARTIST:
-                                                        p.set_selection(artistNow)
-							break 
+					#for p in self.shell.props.library_source.get_property_views():
+                                        #        if p.props.prop == rhythmdb.PROP_ARTIST:
+                                        #                p.set_selection(artistNow)
+					#		break 
 					reply = ""		
 				except:
 					reply = "couldn't list artists\r\n"
@@ -226,14 +218,13 @@ class ClientThread(Thread):
 					# reset to all artists
 					for p in self.shell.props.library_source.get_property_views():
                                                 if p.props.prop == rhythmdb.PROP_ARTIST:
-							artistNow = p.get_selection()
                                                         p.set_selection([""])
 							break      
 					
 					# update the "set no artist"
 					gtk.gdk.threads_leave()
 					# python doesn't have Thread.yield as in Java
-					time.sleep(0.1)
+					time.sleep(0.3)
 					gtk.gdk.threads_enter()
 
 					if len(command.split("set artist ")) == 2:
