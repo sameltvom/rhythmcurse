@@ -377,24 +377,20 @@ class RhythmcursePlugin (rb.Plugin):
 		rb.Plugin.__init__(self)
 
 
-	def artist_changed_callback(self, arg2, arg3):
-		self.file.write("artist selection changed\n")
+	# The album will change when the artist change so artist changing info is not needed
+	def album_changed_callback(self, arg2, arg3):
+		self.file.write("album selection changed\n")
 		self.file.flush()
+
+		for client in self.clientSocketsAndThreads:
+			client.send("Album changed\r\n")
 	
-	def song_changed_callback(self, view, name, user_data):
-		self.file.write("song selection changed\n")
-		self.file.flush()
-
-
-
 	def song_changed_method(self, player, entry):
 		self.file.write("song_changed_method called\n")
 		self.file.flush()
 
-		self.file2 = open("/tmp/rhythmcurse2.log", "w")
-		self.file2.write("song changed\n")
-		self.file2.flush()
-
+		for client in self.clientSocketsAndThreads:
+			client.send("Song changed\r\n")
 
 
 	def activate(self, shell):
@@ -403,20 +399,18 @@ class RhythmcursePlugin (rb.Plugin):
 		self.file.write("rhythmcurse log\n")
 		self.file.flush()
 
+		# so that we can close all sockets and kill all threads
+		self.clientSocketsAndThreads = {}
+
 		for p in self.shell.props.library_source.get_property_views():
-			if p.props.prop == rhythmdb.PROP_ARTIST:
-				p.connect('properties-selected', self.artist_changed_callback)
-			if p.props.prop == rhythmdb.PROP_TITLE:
-				p.connect('properties-selected', self.song_changed_callback)
+			if p.props.prop == rhythmdb.PROP_ALBUM:
+				p.connect('properties-selected', self.album_changed_callback)
 		
 		player = shell.get_player()
 		self.csi_id = player.connect('playing-song-changed', self.song_changed_method)					
 
 
-		# so that we can close all sockets and kill all threads
-		self.clientSocketsAndThreads = {}
-
-	
+			
 		# creating server socket
 		self.HOST = ''
 		self.PORT = 5000
