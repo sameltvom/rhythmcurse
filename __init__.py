@@ -233,7 +233,8 @@ class ClientThread(Thread):
 					for p in self.shell.props.library_source.get_property_views():
                                                 if p.props.prop == rhythmdb.PROP_ARTIST:
                                                         p.set_selection([""])
-							break      
+						if p.props.prop == rhythmdb.PROP_ALBUM:
+                                                        p.set_selection([""])
 					
 					# update the "set no artist"
 					gtk.gdk.threads_leave()
