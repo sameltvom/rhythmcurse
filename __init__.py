@@ -67,11 +67,14 @@ class ClientThread(Thread):
 
 		localKeepOn = True
 
+		fs = self.clientSocket.makefile()
+
 		while self.keepOn[0] and localKeepOn:
 			# This is a complicated recv. If we get a timeout,
 			# continue so we can check condition
 			try:
-				command = self.clientSocket.recv(1024)
+				#command = self.clientSocket.recv(1024)
+				command = fs.readline()
 			except socket.timeout:
 				# self.file.write("Got timeout\n")
 				# self.file.flush()
@@ -86,7 +89,7 @@ class ClientThread(Thread):
 					pass
 
 
-			self.file.write("Got command\n")
+			self.file.write("Got command #%s#\n" % (command)) 
 			self.file.flush()
 			if not command:
 				self.file.write("Got NO command\n")
@@ -95,6 +98,7 @@ class ClientThread(Thread):
 				break
 				
 			command = command.strip()
+			self.file.write("Command  stripped #%s#\n" % (command)) 
 			# make sure to get the gdk lock since
 			# gtk isn't thread safe
 			gtk.gdk.threads_enter()
@@ -170,22 +174,32 @@ class ClientThread(Thread):
                                                 if p.props.prop == rhythmdb.PROP_ARTIST:
                                                         p.set_selection([""])
 							break      
+				
+					# Update the list
+					gtk.gdk.threads_leave()
+					# python doesn't have Thread.yield as in Java
+					time.sleep(0.3)
+					gtk.gdk.threads_enter()
+
+
 					reply = ""		
 				except:
 					reply = "couldn't list artists\r\n"
 			elif command == "artist":
 				try:
+					# OBS! You must run all artists before
+
 					# reset to all artists
-					for p in self.shell.props.library_source.get_property_views():
-                                                if p.props.prop == rhythmdb.PROP_ARTIST:
-                                                        p.set_selection([""])
-							break      
-					
-					# update the "set no artist"
-					gtk.gdk.threads_leave()
-					# python doesn't have Thread.yield as in Java
-					time.sleep(0.3)
-					gtk.gdk.threads_enter()
+					#for p in self.shell.props.library_source.get_property_views():
+                                        #        if p.props.prop == rhythmdb.PROP_ARTIST:
+                                        #                p.set_selection([""])
+					#		break      
+					#
+					## update the "set no artist"
+					#gtk.gdk.threads_leave()
+					## python doesn't have Thread.yield as in Java
+					#time.sleep(0.3)
+					#gtk.gdk.threads_enter()
 
 					# find all artists
 					artists = set()
@@ -257,6 +271,102 @@ class ClientThread(Thread):
 				except:
 					reply = "couldn't set artists\r\n"
 
+			elif command == "all albums":
+				try:
+					# reset to all albums
+					for p in self.shell.props.library_source.get_property_views():
+                                                if p.props.prop == rhythmdb.PROP_ALBUM:
+                                                        p.set_selection([""])
+							break      
+					reply = ""		
+				except:
+					reply = "couldn't list albums\r\n"
+			elif command == "album":
+				try:
+					# OBS! You must run all albums first or all artists
+
+					# reset to all albums
+					#for p in self.shell.props.library_source.get_property_views():
+                                        #        if p.props.prop == rhythmdb.PROP_ALBUM:
+                                        #                p.set_selection([""])
+					#		break      
+					#
+					## update the "set no album"
+					#gtk.gdk.threads_leave()
+					## python doesn't have Thread.yield as in Java
+					#time.sleep(0.3)
+					#gtk.gdk.threads_enter()
+
+					# find all albums
+					albums = set()
+					for row in self.shell.props.selected_source.props.query_model:
+					 	entry = row[0]
+					 	album = self.shell.props.db.entry_get(entry, rhythmdb.PROP_ALBUM)
+						albums.add(album)
+					id = 0
+
+					# sorted list
+					albums_sorted = sorted(albums)
+					self.clientSocket.send("ALBUM ALBUM_BGN\r\n")
+					for album in albums_sorted:
+						reply = "ALBUM ALBUM_ITM %d - %s\r\n" % (id, album)
+						self.clientSocket.send(reply)
+						id+=1
+					self.clientSocket.send("ALBUM ALBUM_END\r\n")
+										
+
+					# reset the artist
+					#for p in self.shell.props.library_source.get_property_views():
+                                        #        if p.props.prop == rhythmdb.PROP_ARTIST:
+                                        #                p.set_selection(artistNow)
+					#		break 
+					reply = ""		
+				except:
+					reply = "couldn't list albums\r\n"
+			elif command.startswith("set album "):
+				try:
+					# reset to all albums
+					for p in self.shell.props.library_source.get_property_views():
+                                                if p.props.prop == rhythmdb.PROP_ALBUM:
+                                                        p.set_selection([""])
+							break      
+					
+					# update the "set no aalbum"
+					gtk.gdk.threads_leave()
+					# python doesn't have Thread.yield as in Java
+					time.sleep(0.3)
+					gtk.gdk.threads_enter()
+
+					if len(command.split("set album ")) == 2:
+						albumId = int(command.split("set album ")[1])
+						
+						albums = set()
+						for row in self.shell.props.selected_source.props.query_model:
+						 	entry = row[0]
+						 	album = self.shell.props.db.entry_get(entry, rhythmdb.PROP_ALBUM)
+							albums.add(album)
+
+						i = 0
+						# sorted list
+						albums_sorted = sorted(albums)
+
+						for s in albums_sorted:
+							if i == albumId:
+								album = s
+								break
+							i+=1
+					else:
+						album = ""
+						
+					for p in self.shell.props.library_source.get_property_views():
+	            			 	if p.props.prop == rhythmdb.PROP_ALBUM:
+							p.set_selection([album])	
+							break
+						
+					reply = "set album %s\r\n" % (album,)
+				except:
+					reply = "couldn't set albums\r\n"
+
 			elif command.startswith("+"):
 				try:
 					self.shell.props.shell_player.set_volume_relative(0.1)
@@ -278,7 +388,7 @@ class ClientThread(Thread):
 				gtk.gdk.threads_leave()
 				continue
 			else:
-				reply = "I don't know that command\r\n"
+				reply = "I don't know that command: %s\r\n" % (command)
 			# let the lock go
 			gtk.gdk.threads_leave()
 
@@ -376,17 +486,21 @@ class RhythmcursePlugin (rb.Plugin):
 		rb.Plugin.__init__(self)
 
 
-	# The album will change when the artist change so artist changing info is not needed
+
+	def artist_changed_callback(self, arg2, arg3):
+		self.file.write("artist selection changed\n")
+		self.file.flush()
+
+		for client in self.clientSocketsAndThreads:
+			client.send("INF_ARTIST INF_ARTIST_OK\r\n")
+
 	def album_changed_callback(self, arg2, arg3):
 		self.file.write("album selection changed\n")
 		self.file.flush()
 
 		for client in self.clientSocketsAndThreads:
-			#client.send("Album changed\r\n")
+			client.send("INF_ALBUM INF_ALBUM_OK\r\n")
 
-			# This command isn't that logical but it hints that
-			# the client should pull the song list
-			client.send("INF_ARTIST INF_ARTIST_OK\r\n")
 	
 	def song_changed_method(self, player, entry):
 		self.file.write("song_changed_method called\n")
@@ -406,9 +520,12 @@ class RhythmcursePlugin (rb.Plugin):
 		self.clientSocketsAndThreads = {}
 
 		for p in self.shell.props.library_source.get_property_views():
+			if p.props.prop == rhythmdb.PROP_ARTIST:
+				p.connect('properties-selected', self.artist_changed_callback)
 			if p.props.prop == rhythmdb.PROP_ALBUM:
 				p.connect('properties-selected', self.album_changed_callback)
 		
+
 		player = shell.get_player()
 		self.csi_id = player.connect('playing-song-changed', self.song_changed_method)					
 
