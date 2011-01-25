@@ -24,9 +24,8 @@ import rb
 import time
 
 class ClientThread(Thread):
-	def __init__(self, file, clientSocket, shell, clients, keepOn):
+	def __init__(self, clientSocket, shell, clients, keepOn):
 		Thread.__init__(self)
-		self.file = file
 		self.shell = shell
 		self.clientSocket = clientSocket
 		self.clients = clients
@@ -50,20 +49,17 @@ class ClientThread(Thread):
 
 
 	def run(self):
-		self.file.write("Client thread, hello\n")
-		self.file.flush()
-
+		print "Client thread, hello"
 		
-		self.file.write("Client thread, hello done\n")
-		self.file.flush()
+		
+		print "Client thread, hello done"
 		
 		
 		# self.clientSocket.send("You are connected to rhythmcurse\r\n")
 		# self.help()
 
 
-		self.file.write("Waiting for a clients command\n")
-		self.file.flush()
+		print "Waiting for a clients command"
 
 		localKeepOn = True
 
@@ -76,12 +72,10 @@ class ClientThread(Thread):
 				#command = self.clientSocket.recv(1024)
 				command = fs.readline()
 			except socket.timeout:
-				# self.file.write("Got timeout\n")
-				# self.file.flush()
+				# print "Got timeout"
 				continue
 			except:
-				self.file.write("Exception here\n")
-				self.file.flush()
+				print "Exception here"
 				try:
 					self.clientSocket.close()
 					return
@@ -89,16 +83,14 @@ class ClientThread(Thread):
 					pass
 
 
-			self.file.write("Got command #%s#\n" % (command)) 
-			self.file.flush()
+			print "Got command #%s#" % (command)
 			if not command:
-				self.file.write("Got NO command\n")
-				self.file.flush()
+				print "Got NO command"
 
 				break
 				
 			command = command.strip()
-			self.file.write("Command  stripped #%s#\n" % (command)) 
+			print "Command  stripped #%s#" % (command)
 			# make sure to get the gdk lock since
 			# gtk isn't thread safe
 			gtk.gdk.threads_enter()
@@ -177,13 +169,6 @@ class ClientThread(Thread):
                                                         p.set_selection([""])
 							break      
 				
-					# Update the list
-					gtk.gdk.threads_leave()
-					# python doesn't have Thread.yield as in Java
-					time.sleep(0.3)
-					gtk.gdk.threads_enter()
-
-
 					reply = ""		
 				except:
 					reply = "couldn't list artists\r\n"
@@ -349,90 +334,73 @@ class ClientThread(Thread):
 
 			self.clientSocket.send(reply)
 			#self.clientSocket.flush()
-			self.file.write("A client sends: "+command+"\n")
-			self.file.flush()
+			print "A client sends: "+command+""
 
 			#self.clientSocket.send("> ")
-			#self.file.write("Waiting for a clients command\n")
-			#self.file.flush()
+			#print "Waiting for a clients command"
 
 		try:
-			self.file.write("Closing down socket\n")
-			self.file.flush()
+			print "Closing down socket"
 
 			self.clientSocket.close()
 		except:
-			self.file.write("Couldn't close down client socket")
-			self.file.flush()
-		self.file.write("A client closes connection\n")
-		self.file.flush()
+			print "Couldn't close down client socket"
+		print "A client closes connection"
 
 		try:
 			del self.clients[self.clientSocket]
-			self.file.write("Client removes it self from list\n")
-			self.file.flush()
+			print "Client removes it self from list"
 		except:
-			self.file.write("Client cant' remove it self from list\n")
-			self.file.flush()
+			print "Client cant' remove it self from list"
 
 
 
 class ServerThread(Thread):
-	def __init__(self, file, serverSocket, shell, clients, keepOn):
+	def __init__(self, serverSocket, shell, clients, keepOn):
 		Thread.__init__(self)
-		self.file = file
 		self.serverSocket = serverSocket
 		self.shell = shell
 		self.clients = clients
 		self.keepOn = keepOn
-		self.file.write("Creating thread...\n")
-		self.file.flush()
+		print "Creating thread..."
 
 	def run(self):
 		print 'Starting network...'
-		self.file.write("Starting network...\n")
-		self.file.flush()
+		print "Starting network..."
 
-		self.file.write("We are now waiting for connections...\n")
-		self.file.flush()
+		print "We are now waiting for connections..."
 		while self.keepOn[0]:
 			clientSocket, addr = self.serverSocket.accept()
-			self.file.write("A new client connected\n")
-			self.file.flush()
+			print "A new client connected"
 
 			clientSocket.settimeout(1)
 
 			if self.keepOn[0]:
-				client = ClientThread(self.file, clientSocket, self.shell, self.clients, self.keepOn)
+				client = ClientThread(clientSocket, self.shell, self.clients, self.keepOn)
 				client.start()
 
 				# save socket and thread so they can be destroyed in deactivate
 				self.clients[clientSocket] = client
 			else:
 				try:
-					#self.file.write("Closing down socket waker\n")
-					#self.file.flush()
+					#print "Closing down socket waker"
 
 					clientSocket.close()
 				except:
-					#self.file.write("Couldn't close down waker socket")
-					self.file.flush()
+					print "Couldn't close down waker socket"
 
 
 
 
-		#self.file.write("Server thread done\n")
-		#self.file.flush()
+		#print "Server thread done"
 
 		try:
 			self.serverSocket.close()
-			#self.file.write("Server socket closed\n")
-			#self.file.flush()
+			#print "Server socket closed"
 
 		except:
 			pass
-			#self.file.write("Couldn't close down server socket\n")
-			#self.file.flush()
+			#print "Couldn't close down server socket"
 
 
 
@@ -441,36 +409,29 @@ class RhythmcursePlugin (rb.Plugin):
 	def __init__(self):
 		rb.Plugin.__init__(self)
 
-
-
 	def artist_changed_callback(self, arg2, arg3):
-		self.file.write("artist selection changed\n")
-		self.file.flush()
+		print "artist selection changed"
 
 		for client in self.clientSocketsAndThreads:
 			client.send("INF_ARTIST INF_ARTIST_OK\r\n")
 
 	def album_changed_callback(self, arg2, arg3):
-		self.file.write("album selection changed\n")
-		self.file.flush()
+		print "album selection changed"
 
 		for client in self.clientSocketsAndThreads:
 			client.send("INF_ALBUM INF_ALBUM_OK\r\n")
 
 	
 	def song_changed_method(self, player, entry):
-		self.file.write("song_changed_method called\n")
-		self.file.flush()
+		print "song_changed_method called"
 
 		for client in self.clientSocketsAndThreads:
 			client.send("SONG_CH SONG_CH_OK\r\n")
 
 
 	def activate(self, shell):
-		self.file = open("/tmp/rhythmcurse.log", "w")
 		self.shell = shell
-		self.file.write("rhythmcurse log\n")
-		self.file.flush()
+		print "rhythmcurse log"
 
 		# so that we can close all sockets and kill all threads
 		self.clientSocketsAndThreads = {}
@@ -501,15 +462,13 @@ class RhythmcursePlugin (rb.Plugin):
 			self.serverSocket.listen(1)
 
 			# creating server thread
-			self.server = ServerThread(self.file, self.serverSocket, self.shell, self.clientSocketsAndThreads, self.keepOn)
+			self.server = ServerThread(self.serverSocket, self.shell, self.clientSocketsAndThreads, self.keepOn)
 			self.server.start()
 		except socket.error, msg:
-			self.file.write("There was an error binding the server socket\n")
-			self.file.flush()
+			print "There was an error binding the server socket"
 
 	def deactivate(self, shell):
-		self.file.write("Deactivating...\n")
-		self.file.flush()
+		print "Deactivating..."
 
 		self.keepOn[0] = False
 		try:
@@ -518,31 +477,23 @@ class RhythmcursePlugin (rb.Plugin):
 			s.connect(('localhost', 5000))
 			
 			s.close()
-			self.file.write("Waker done\n");
-			self.file.flush()
+			print "Waker done";
 
 		except:
-			self.file.write("Couldn't connect waker\n");
-			self.file.flush()
+			print "Couldn't connect waker";
 
 
 		del self.shell
 		
-		self.file.write("Number of clients: %d\n" % (len(self.clientSocketsAndThreads),))
-		self.file.flush()
+		print "Number of clients: %d" % (len(self.clientSocketsAndThreads))
 
 		for aSocket,aThread in self.clientSocketsAndThreads.iteritems():
 			try:
-				self.file.write("Closing down a socket\n")
-				self.file.flush()
+				print "Closing down a socket"
 				aSocket.close()
 				# we ignore the thread for now
 			except:
-				self.file.write("Problem closing socket\n")
-				self.file.flush()
+				print "Problem closing socket"
 
 		self.clientSocketsAndThreads.clear()
 		
-		#self.file.close()
-		#del self.file
-
